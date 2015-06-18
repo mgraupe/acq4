@@ -188,7 +188,7 @@ class AxoPatch200(DAQGeneric):
         return AxoPatchTaskGui(self, taskRunner, self.ivModes)
         
     def deviceInterface(self, win):
-        return AxoPatchDevGui(self)
+        return AxoPatchDevGui(self,self.config['AxoPatchVersion'])
     
     def getMapping(self, chans=None, mode=None):
         return AP200DataMapping(self, self.ivModes, chans, mode )
@@ -586,7 +586,7 @@ class AxoPatchTaskGui(DAQGenericTaskGui):
 
         
 class AxoPatchDevGui(QtGui.QWidget):
-    def __init__(self, dev):
+    def __init__(self, dev,AxoPatchVersion):
         QtGui.QWidget.__init__(self)
         self.dev = dev
         self.ui = Ui_devGui()
