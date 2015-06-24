@@ -77,6 +77,7 @@ class AxoPatch200(DAQGeneric):
 		
         # Generate config to use for DAQ 
         daqConfig = {}
+        self.axoPatchName = name
         
         for ch in ['GainChannel', 'LPFChannel', 'ModeChannel']:
             if ch not in config:
@@ -188,7 +189,7 @@ class AxoPatch200(DAQGeneric):
         return AxoPatchTaskGui(self, taskRunner, self.ivModes)
         
     def deviceInterface(self, win):
-        return AxoPatchDevGui(self,self.config['AxoPatchVersion'])
+        return AxoPatchDevGui(self)
     
     def getMapping(self, chans=None, mode=None):
         return AP200DataMapping(self, self.ivModes, chans, mode )
@@ -259,7 +260,7 @@ class AxoPatch200(DAQGeneric):
         with self.modeLock:
             self.mdCanceled = False
         app = QtGui.QApplication.instance()
-        msg = 'Please set AxoPatch mode switch to %s' % mode
+        msg = 'Please set %s mode switch to %s' % (self.axoPatchName,mode)
 
         self.sigShowModeDialog.emit(msg)
         
@@ -586,7 +587,7 @@ class AxoPatchTaskGui(DAQGenericTaskGui):
 
         
 class AxoPatchDevGui(QtGui.QWidget):
-    def __init__(self, dev,AxoPatchVersion):
+    def __init__(self, dev ):
         QtGui.QWidget.__init__(self)
         self.dev = dev
         self.ui = Ui_devGui()
