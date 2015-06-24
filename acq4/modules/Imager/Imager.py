@@ -48,42 +48,77 @@ from .imagerTemplate import Ui_Form
 
 # Create some useful configurations for the user.
 VideoModes = OrderedDict([
-    ('256x3', {
-        'Average': 1,
-        'Downsample': 3,
-        'Image Width': 256,
-        'Image Height': 256,
-        'Blank Screen': False,
-        'Bidirectional': True,
-    }),
-    ('128x4', {
-        'Average': 1,
-        'Downsample': 4,
-        'Image Width': 128 ,
-        'Image Height': 128,
-        'Blank Screen': False,
-        'Bidirectional': True,
-    }),
+    ('1024x1', 
+      OrderedDict([
+        ('Scan Control', {
+            'Sample Rate':900e3,
+            'Average': 1,
+            'Downsample': 1,
+            'Image Width': 1024,
+            'Image Height': 1024,
+            'Overscan':400e-6,
+            'Blank Screen': False,
+            'Bidirectional': True,
+         }),
+        ('Image Control', {
+            'Decomb': 169e-6,
+         }),
+       ])
+    ),
+    ('512x1', 
+      OrderedDict([
+        ('Scan Control', {
+            'Sample Rate':900e3,
+            'Average': 1,
+            'Downsample': 1,
+            'Image Width': 512,
+            'Image Height': 512,
+            'Overscan':400e-6,
+            'Blank Screen': False,
+            'Bidirectional': True,
+         }),
+        ('Image Control', {
+            'Decomb': 168e-6,
+         }),
+       ])
+    ),
+    ('256x1', 
+      OrderedDict([
+        ('Scan Control', {
+            'Sample Rate':600e3,
+            'Average': 1,
+            'Downsample': 1,
+            'Image Width': 256,
+            'Image Height': 256,
+            'Overscan':300e-6,
+            'Blank Screen': False,
+            'Bidirectional': True,
+         }),
+        ('Image Control', {
+            'Decomb': 167e-6,
+         }),
+       ])
+    ),
+    ('128x1', 
+      OrderedDict([
+        ('Scan Control', {
+            'Sample Rate':400e3,
+            'Average': 1,
+            'Downsample': 1,
+            'Image Width': 128,
+            'Image Height': 128,
+            'Overscan':300e-6,
+            'Blank Screen': False,
+            'Bidirectional': True,
+         }),
+        ('Image Control', {
+            'Decomb': 165e-6,
+         }),
+       ])
+    ),
 ])
 
-FrameModes = OrderedDict([
-    ('512x10', {
-        'Average': 1,
-        'Downsample': 10,
-        'Image Width': 512,
-        'Image Height': 512,
-        'Blank Screen': True,
-        'Bidirectional' : True,
-    }),
-    ('4x1024x2', {
-        'Average': 4,
-        'Downsample': 2,
-        'Image Width': 1024,
-        'Image Height': 1024,
-        'Blank Screen': True,
-        'Bidirectional': True,
-    }),
-])
+FrameModes = VideoModes
 
 
 
@@ -234,6 +269,7 @@ class Imager(Module):
         self.win.show()
         self.win.setWindowTitle('Multiphoton Imager V 1.01')
         self.win.resize(500, 900) # make the window big enough to use on a large monitor...
+        self.win.move(1123,15)
 
         self.w1 = QtGui.QSplitter() # divide l, r
         self.w1.setOrientation(QtCore.Qt.Horizontal)
@@ -286,7 +322,7 @@ class Imager(Module):
         self.ignoreRoiChange = False
         self.lastFrame = None
 
-        self.fieldSize = 63.0*120e-6 # field size for 63x, will be scaled for others
+        self.fieldSize = 0.01024 # to get a field of view of 512 mu m x 512 mu m 0.0063.0*120e-6 # field size for 63x, will be scaled for others
 
         self.scanVoltageCache = None  # cached scan protocol computed by generateScanProtocol
         
@@ -364,14 +400,14 @@ class Imager(Module):
         self.param = PT.Parameter(name = 'param', children=[
             dict(name='Scan Control', type='group', children=[
                 dict(name='Pockels', type='float', value=0.03, suffix='V', step=0.005, limits=[0, 1.5], siPrefix=True),
-                dict(name='Sample Rate', type='int', value=2.0e6, suffix='Hz', dec=True, minStep=100., step=0.5, limits=[10e3, 50e6], siPrefix=True),
+                dict(name='Sample Rate', type='int', value=9e5, suffix='Hz', dec=True, minStep=100., step=0.5, limits=[10e3, 50e6], siPrefix=True),
                 dict(name='Downsample', type='int', value=1, limits=[1,None]),
                 dict(name='Average', type='int', value=1, limits=[1,100]),
-                dict(name='Blank Screen', type='bool', value=True),
-                dict(name='Image Width', type='int', value=500, readonly=False, limits=[1, None]),
-                dict(name='Image Height', type='int', value=500, readonly=False, limits=[1, None]),
+                dict(name='Blank Screen', type='bool', value=False),
+                dict(name='Image Width', type='int', value=512, readonly=False, limits=[1, None]),
+                dict(name='Image Height', type='int', value=512, readonly=False, limits=[1, None]),
                 dict(name='Bidirectional', type='bool', value=True),
-                dict(name='Overscan', type='float', value=50e-6, suffix='s', siPrefix=True, limits=[0, None], step=10e-6),
+                dict(name='Overscan', type='float', value=200e-6, suffix='s', siPrefix=True, limits=[0, None], step=10e-6),
                 dict(name='Photodetector', type='list', values=self.detectors),
                 dict(name='Follow Stage', type='bool', value=True),
             ]),
@@ -386,7 +422,7 @@ class Imager(Module):
                 dict(name='Objective', type='str', value='Unknown', readonly=True),
             ]),
             dict(name='Image Control', type='group', children=[
-                dict(name='Decomb', type='float', value=20e-6, suffix='s', siPrefix=True, bounds=[0, 1e-3], step=2e-7, decimals=5, children=[
+                dict(name='Decomb', type='float', value=172e-6, suffix='s', siPrefix=True, bounds=[0, 1e-3], step=2e-7, decimals=5, children=[
                     dict(name='Auto', type='action'),
                     dict(name='Subpixel', type='bool', value=False),
                     ]),
@@ -751,10 +787,10 @@ class Imager(Module):
             self.lastFrame.autoDecomb()
             self.param.child('Image Control', 'Decomb').setValue(self.lastFrame._decomb[0])
             
-    def loadModeSettings(self, params):
-        param = self.param.child('Scan Control')
+    def loadModeSettings(self, params, controlType):
+        param = self.param.child(controlType)
         with param.treeChangeBlocker():  # accumulate changes, emit once at the end.
-            for name, val in params.items():
+            for name, val in params[controlType].items():
                 param[name] = val
 
     def acquireFrameClicked(self, mode):
@@ -765,13 +801,17 @@ class Imager(Module):
             self.imagingThread.wait()
 
         if mode is not None:
-            self.loadModeSettings(FrameModes[mode])
+            self.loadModeSettings(FrameModes[mode],'Image Control')
+            self.loadModeSettings(FrameModes[mode],'Scan Control')
         self.updateImagingProtocol()
         self.takeImage()
+        #self.updateDecomb()
         
     def startVideoClicked(self, mode):
         if mode is not None:
-            self.loadModeSettings(VideoModes[mode])
+            self.loadModeSettings(VideoModes[mode],'Image Control')
+            self.loadModeSettings(VideoModes[mode],'Scan Control')
+        #self.updateDecomb()
         self.updateImagingProtocol()
         self.imagingCtrl.acquisitionStarted()
         self.imagingThread.startVideo()
