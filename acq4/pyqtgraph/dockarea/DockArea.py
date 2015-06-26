@@ -104,12 +104,9 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
             'below': 'after'
         }[position]
         #print "request insert", dock, insertPos, neighbor
-        old = dock.container()
         container.insert(dock, insertPos, neighbor)
         dock.area = self
         self.docks[dock.name()] = dock
-        if old is not None:
-            old.apoptose()
         
         return dock
         
@@ -117,10 +114,12 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
         """
         Move an existing Dock to a new location. 
         """
+        old = dock.container()
         ## Moving to the edge of a tabbed dock causes a drop outside the tab box
         if position in ['left', 'right', 'top', 'bottom'] and neighbor is not None and neighbor.container() is not None and neighbor.container().type() == 'tab':
             neighbor = neighbor.container()
         self.addDock(dock, position, neighbor)
+        old.apoptose()
         
     def getContainer(self, obj):
         if obj is None:
@@ -170,7 +169,8 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
         if self.home is None:
             area = DockArea(temporary=True, home=self)
             self.tempAreas.append(area)
-            win = TempAreaWindow(area)
+            win = QtGui.QMainWindow()
+            win.setCentralWidget(area)
             area.win = win
             win.show()
         else:
@@ -193,13 +193,7 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
         """
         Return a serialized (storable) representation of the state of
         all Docks in this DockArea."""
-
-        if self.topContainer is None:
-            main = None
-        else:
-            main = self.childState(self.topContainer)
-
-        state = {'main': main, 'float': []}
+        state = {'main': self.childState(self.topContainer), 'float': []}
         for a in self.tempAreas:
             geo = a.win.geometry()
             geo = (geo.x(), geo.y(), geo.width(), geo.height())
@@ -234,8 +228,7 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
         #print "found docks:", docks
         
         ## 2) create container structure, move docks into new containers
-        if state['main'] is not None:
-            self.buildFromState(state['main'], docks, self, missing=missing)
+        self.buildFromState(state['main'], docks, self, missing=missing)
         
         ## 3) create floating areas, populate
         for s in state['float']:
@@ -312,16 +305,10 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
 
     def apoptose(self):
         #print "apoptose area:", self.temporary, self.topContainer, self.topContainer.count()
-        if self.topContainer.count() == 0:
+        if self.temporary and self.topContainer.count() == 0:
             self.topContainer = None
-            if self.temporary:
-                self.home.removeTempArea(self)
-                #self.close()
-
-    def clear(self):
-        docks = self.findAll()[1]
-        for dock in docks.values():
-            dock.close()
+            self.home.removeTempArea(self)
+            #self.close()
             
     ## PySide bug: We need to explicitly redefine these methods
     ## or else drag/drop events will not be delivered.
@@ -337,12 +324,5 @@ class DockArea(Container, QtGui.QWidget, DockDrop):
     def dropEvent(self, *args):
         DockDrop.dropEvent(self, *args)
 
-
-class TempAreaWindow(QtGui.QMainWindow):
-    def __init__(self, area, **kwargs):
-        QtGui.QMainWindow.__init__(self, **kwargs)
-        self.setCentralWidget(area)
-
-    def closeEvent(self, *args, **kwargs):
-        self.centralWidget().clear()
-        QtGui.QMainWindow.closeEvent(self, *args, **kwargs)
+        
+        
