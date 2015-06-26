@@ -115,7 +115,7 @@ class AxoPatch200(DAQGeneric):
         else:
             self.hasSecondaryChannel = False
         
-        self.version = config.get('version', '200B')
+        self.version = config.get('Version', '200B')
 
         # Axopatch gain telegraph
         # telegraph should not read below 2 V in CC mode
