@@ -11,6 +11,7 @@ import ctypes
 import SuperTask
 import pdb
 
+
 dtypes = {  ## for converting numpy dtypes to nidaq type strings
     '<f8': 'F64',
     '<i2': 'I16',
@@ -147,10 +148,11 @@ class _NIDAQ:
     def __del__(self):
         self.__class__.NIDAQ_CREATED = False
 
-    def createTask(self):
-        return Task(self)
+    def createTask(self, name=""):
+        return Task(self, name)
 
     def createSuperTask(self):
+        from . import SuperTask
         return SuperTask.SuperTask(self)
     
     def interpretMode(self, mode):

@@ -1087,7 +1087,7 @@ class ImagerCamModInterface(CameraModuleInterface):
 
         CameraModuleInterface.__init__(self, imager, mod)
 
-        mod.window().addItem(imager.imageItem)
+        mod.window().addItem(imager.imageItem, z=10)
 
         self.imager.imagingThread.sigNewFrame.connect(self.newFrame)
 

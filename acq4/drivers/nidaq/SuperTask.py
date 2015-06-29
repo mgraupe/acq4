@@ -5,12 +5,14 @@ from numpy import *
 #import cheader
 import acq4.util.ptime as ptime  ## platform-independent precision timing
 from collections import OrderedDict
+from .nidaq import NIDAQError
 #import debug
 import pdb
 
 # refClkTimebase does not work for the new device family
 #newDeviceFamilies = [DAQmx_Val_MSeriesDAQ, DAQmx_Val_XSeriesDAQ]
 #oldDeviceFamilies = [DAQmx_Val_ESeriesDAQ, DAQmx_Val_SSeriesDAQ, DAQmx_Val_BSeriesDAQ, DAQmx_Val_AOSeries]
+
 
 
 class SuperTask:
@@ -267,18 +269,17 @@ class SuperTask:
         clk = '/%s/%s/SampleClock' % (dev, trigSource)
         
         for k in self.tasks:
-            ## TODO: this must be skipped for the task which uses trigSource by default.
-            if k[1] not in ['ci','co']:
+            ## TODO: this must be skipped for the task which uses clkSource by default.
+            try:
                 maxrate = self.tasks[k].GetSampClkMaxRate()
-                print k, maxrate
+            except NIDAQError as exc:
+                if exc.errCode == -200452:
+                    # Task does not support GetSampClkMaxRate
+                    pass
+            else:
                 if rate > maxrate:
                     raise ValueError("Requested sample rate %d exceeds maximum (%d) for this device." % (int(rate), int(maxrate)))
-            #if k[0] == 'Dev1':
-            #    rate = 100000
-            #    nPts = 10000
-            #elif k[0] == 'Dev2':
-            #    rate = 10000
-            #    nPts = 1000
+            
             if k != key:
                 if k[1] in ['ci','co']:
                     print "%s CfgSampClkTiming(None, %f, Val_Rising, Val_FiniteSamps, %d)" % (str(k), rate, nPts)
