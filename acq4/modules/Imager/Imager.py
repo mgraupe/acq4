@@ -269,7 +269,7 @@ class Imager(Module):
         self.win.show()
         self.win.setWindowTitle('Multiphoton Imager V 1.01')
         self.win.resize(500, 900) # make the window big enough to use on a large monitor...
-        self.win.move(1123,15)
+        self.win.move(1248,6)
 
         self.w1 = QtGui.QSplitter() # divide l, r
         self.w1.setOrientation(QtCore.Qt.Horizontal)
