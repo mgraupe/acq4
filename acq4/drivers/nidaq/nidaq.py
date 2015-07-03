@@ -8,7 +8,7 @@ import acq4.util.ptime as ptime  ## platform-independent precision timing
 import acq4.util.debug as debug
 import acq4.util.clibrary as clibrary
 import ctypes
-import SuperTask
+#import SuperTask
 import pdb
 
 
