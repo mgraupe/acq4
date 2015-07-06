@@ -122,3 +122,15 @@ class ContrastCtrl(QtGui.QWidget):
                 self.ignoreLevelChange = False
 
         self.imageItem.setOpacity(self.alpha)
+        # image display controls
+        if self.ui.flipChkBox.isChecked():
+            data = np.flipud(data)
+        if self.ui.mirrorChkBox.isChecked():
+            data = np.fliplr(data)
+        if self.ui.rotateLeftChkBox.isChecked():
+            data = np.rot90(data,3)
+        if self.ui.rotateRightChkBox.isChecked():
+            data = np.rot90(data,1)
+        
+        return data
+            

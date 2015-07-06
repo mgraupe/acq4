@@ -133,7 +133,7 @@ class FrameDisplay(QtCore.QObject):
             prof()
             
             ## Set new levels if auto gain is enabled
-            self.contrastCtrl.processImage(data)
+            data = self.contrastCtrl.processImage(data)
             prof()
             
             ## update image in viewport

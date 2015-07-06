@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'acq4/util/imaging/contrast_ctrl_template.ui'
+# Form implementation generated from reading ui file '.\contrast_ctrl_template.ui'
 #
-# Created: Fri Jan 23 18:20:00 2015
+# Created: Mon Jul 06 15:31:42 2015
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,10 +26,10 @@ except AttributeError:
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName(_fromUtf8("Form"))
-        Form.resize(176, 384)
+        Form.resize(176, 391)
         self.gridLayout = QtGui.QGridLayout(Form)
-        self.gridLayout.setMargin(0)
         self.gridLayout.setSpacing(0)
+        self.gridLayout.setMargin(0)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.histogram = HistogramLUTWidget(Form)
         self.histogram.setObjectName(_fromUtf8("histogram"))
@@ -59,6 +59,18 @@ class Ui_Form(object):
         self.zoomLiveBtn = QtGui.QPushButton(Form)
         self.zoomLiveBtn.setObjectName(_fromUtf8("zoomLiveBtn"))
         self.gridLayout.addWidget(self.zoomLiveBtn, 6, 0, 1, 2)
+        self.mirrorChkBox = QtGui.QCheckBox(Form)
+        self.mirrorChkBox.setAutoRepeat(False)
+        self.mirrorChkBox.setTristate(False)
+        self.mirrorChkBox.setObjectName(_fromUtf8("mirrorChkBox"))
+        self.gridLayout.addWidget(self.mirrorChkBox, 7, 1, 1, 1)
+        self.alphaSlider = QtGui.QSlider(Form)
+        self.alphaSlider.setMaximum(100)
+        self.alphaSlider.setSingleStep(1)
+        self.alphaSlider.setProperty("value", 100)
+        self.alphaSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.alphaSlider.setObjectName(_fromUtf8("alphaSlider"))
+        self.gridLayout.addWidget(self.alphaSlider, 4, 1, 1, 1)
         self.label_4 = QtGui.QLabel(Form)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -68,13 +80,26 @@ class Ui_Form(object):
         self.label_4.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.gridLayout.addWidget(self.label_4, 4, 0, 1, 1)
-        self.alphaSlider = QtGui.QSlider(Form)
-        self.alphaSlider.setMaximum(100)
-        self.alphaSlider.setSingleStep(1)
-        self.alphaSlider.setProperty("value", 100)
-        self.alphaSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.alphaSlider.setObjectName(_fromUtf8("alphaSlider"))
-        self.gridLayout.addWidget(self.alphaSlider, 4, 1, 1, 1)
+        self.flipChkBox = QtGui.QCheckBox(Form)
+        self.flipChkBox.setCheckable(True)
+        self.flipChkBox.setChecked(False)
+        self.flipChkBox.setAutoRepeat(False)
+        self.flipChkBox.setAutoExclusive(False)
+        self.flipChkBox.setTristate(False)
+        self.flipChkBox.setObjectName(_fromUtf8("flipChkBox"))
+        self.gridLayout.addWidget(self.flipChkBox, 7, 0, 1, 1)
+        self.rotateLeftChkBox = QtGui.QCheckBox(Form)
+        self.rotateLeftChkBox.setCheckable(True)
+        self.rotateLeftChkBox.setAutoExclusive(False)
+        self.rotateLeftChkBox.setTristate(False)
+        self.rotateLeftChkBox.setObjectName(_fromUtf8("rotateLeftChkBox"))
+        self.gridLayout.addWidget(self.rotateLeftChkBox, 9, 0, 1, 1)
+        self.rotateRightChkBox = QtGui.QCheckBox(Form)
+        self.rotateRightChkBox.setCheckable(True)
+        self.rotateRightChkBox.setAutoExclusive(False)
+        self.rotateRightChkBox.setTristate(False)
+        self.rotateRightChkBox.setObjectName(_fromUtf8("rotateRightChkBox"))
+        self.gridLayout.addWidget(self.rotateRightChkBox, 9, 1, 1, 1)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -97,6 +122,10 @@ class Ui_Form(object):
 "the frame when set to 1.0. A value of 0.0 meters from \n"
 "the entire frame.", None))
         self.zoomLiveBtn.setText(_translate("Form", "Zoom to Image", None))
+        self.mirrorChkBox.setText(_translate("Form", "Mirror", None))
         self.label_4.setText(_translate("Form", "Transparency", None))
+        self.flipChkBox.setText(_translate("Form", "Flip", None))
+        self.rotateLeftChkBox.setText(_translate("Form", "Rotate Left", None))
+        self.rotateRightChkBox.setText(_translate("Form", "Rotate Right", None))
 
 from acq4.pyqtgraph import HistogramLUTWidget
