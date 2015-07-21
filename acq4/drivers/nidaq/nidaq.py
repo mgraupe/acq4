@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
-#from ctypes import *
 import sys, re, types, ctypes, os, time
+import ctypes
 from numpy import *
 import numpy as np
-#import cheader
 import acq4.util.ptime as ptime  ## platform-independent precision timing
 import acq4.util.debug as debug
 import acq4.util.clibrary as clibrary
+#<<<<<<< HEAD
 import ctypes
 #import SuperTask
 import pdb
 
+#=======
+from . import SuperTask
+from .base import NIDAQError
+#>>>>>>> acq4/develop
 
 dtypes = {  ## for converting numpy dtypes to nidaq type strings
     '<f8': 'F64',
@@ -54,11 +58,6 @@ def init():
     #NIDAQ.functions = cheader.getFuncs(xmlFiles)
     #time.clock()
 
-
-class NIDAQError(Exception):
-    def __init__(self, errCode, msg):
-        Exception.__init__(self, msg)
-        self.errCode = errCode
 
 class _NIDAQ:
     NIDAQ_CREATED = False

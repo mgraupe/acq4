@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-#from ctypes import *
-import time #sys, re, types, ctypes, os, time
+import time
 from numpy import *
-#import cheader
 import acq4.util.ptime as ptime  ## platform-independent precision timing
 from collections import OrderedDict
-from .nidaq import NIDAQError
+#from .nidaq import NIDAQError
 #import debug
 import pdb
 
@@ -13,6 +11,9 @@ import pdb
 #newDeviceFamilies = [DAQmx_Val_MSeriesDAQ, DAQmx_Val_XSeriesDAQ]
 #oldDeviceFamilies = [DAQmx_Val_ESeriesDAQ, DAQmx_Val_SSeriesDAQ, DAQmx_Val_BSeriesDAQ, DAQmx_Val_AOSeries]
 
+#=======
+from .base import NIDAQError
+#>>>>>>> acq4/develop
 
 
 class SuperTask:
