@@ -61,15 +61,15 @@ class _PCOCamClass:
 		self.glvar['do_libunload']=1
 		_PCOCamClass.close_camera()
 		
-	# def call(self, function, *args):
-		# a = function(*args)
-        # if a() == None:
-            # return a
-        # elif a() != 0:
-			# print "Function '%s%s' failed with error %08X " % (func, str(args), a())
-			# LIB.PCO_GetErrorText(a)
-        # else:
-            # return a
+	def call(self, function, *args):
+		a = function(*args)
+		if a() == None:
+			return a
+		elif a() != 0:
+			print "Function '%s%s' failed with error %08X " % (func, str(args), a())
+			LIB.PCO_GetErrorText(a)
+		else:
+			return a
 
 	
 class _PCOCameraClass:
