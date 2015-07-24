@@ -121,7 +121,7 @@ class _PCOCameraClass:
 		#self.set_storagemode(self.glvar['out_ptr'],0)
 		self.show_frametime(self.glvar['out_ptr'])
 		self.arm_camera(self.glvar['out_ptr'])
-		#self.start_camera(self.glvar['out_ptr'])
+		self.start_camera(self.glvar['out_ptr'])
 	
 	def start_camera(self,camHand):
 		act_recState = c_ulong(10)
