@@ -1,5 +1,7 @@
 import serial, struct, time, collections
 import numpy as np
+import socket as sock
+import re
 
 try:
     # this is nicer because it provides deadlock debugging information
@@ -7,14 +9,14 @@ try:
 except ImportError:
     from threading import RLock
 
-try:
-    from ..SerialDevice import SerialDevice, TimeoutError, DataError
-except ValueError:
-    ## relative imports not allowed when running from command prompt
-    if __name__ == '__main__':
-        import sys, os
-        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-        from SerialDevice import SerialDevice, TimeoutError, DataError
+#try:
+#    from ..SerialDevice import SerialDevice, TimeoutError, DataError
+#except ValueError:
+#    ## relative imports not allowed when running from command prompt
+#    if __name__ == '__main__':
+#        import sys, os
+#        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+#        from SerialDevice import SerialDevice, TimeoutError, DataError
 
 
 def threadsafe(method):
@@ -25,7 +27,7 @@ def threadsafe(method):
     return lockMutex
 
 
-class socketStage(socket):
+class socketStage():
     """
     Provides access to a stage controlled from a different computer through the network connection.
 
@@ -45,7 +47,7 @@ class socketStage(socket):
 
     def __init__(self, ipAddress,portOnHost):
         
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create a socket object
+        self.s = sock.socket(sock.AF_INET, sock.SOCK_STREAM) #create a socket object
         self.host = ipAddress
         self.port = portOnHost
         
@@ -53,11 +55,18 @@ class socketStage(socket):
         # stage operates in microns and ACQ4 in meters
         self.conversion = 1.E6
         
-        s.connect((self.host,self.port))
+        self.locationPrecision = 1.E-6
+        self.axes = collections.OrderedDict([(0,'x'),(1,'y'),(2,'z')])
+        
+        self.s.connect((self.host,self.port))
         
         self.lock = RLock()
         self.moving = False
-
+    
+    def __del__(self):
+        self.s.send('disconnect')
+        del self.s
+        
     @threadsafe
     def getPos(self):
         """Get current position reported by stage.
@@ -66,18 +75,19 @@ class socketStage(socket):
 
         """
         try:
-            s.send('getPos')
-            ans = s.recv(self.sizeOfDataPackage)
-        except socket.error as err :
+            self.s.send('getPos')
+            ans = self.s.recv(self.sizeOfDataPackage)
+        except sock.error as err :
             raise err
-
-        pos = [ans[i]/self.conversion for i in [1,2,3]]
+        
+        pos = self.convertResponse(ans)
+        pos = tuple(pos/self.conversion)
 
         return pos
 
     @threadsafe
-    def moveTo(self, axis, pos, timeout=None):
-        """Set the position of *drive*.
+    def relativeMoveTo(self, pos, timeout=None):
+        """Make a relative move of stage.
         
         Any item in the position may be set as None to leave it unchanged.
         
@@ -98,81 +108,205 @@ class socketStage(socket):
         RuntimeError if the move was unsuccessful (final position does not match the 
         requested position). Exceptions contain the final position as `ex.lastPosition`.
         """
-        assert drive is None or drive in range(1,5)
-        assert speed == 'fast' or speed in range(16)
 
-        if drive is not None:
-            self.setDrive(drive)
-
-        currentPos = self.getPos(scaled=False)[1]
-
-        # scale position to microsteps, fill in Nones with current position
-        ustepPos = np.empty(3, dtype=int)
+        currentPos = self.getPos()
+        
+        # replace none entries with current position values
+        pos = np.asarray(pos)
         for i in range(3):
             if pos[i] is None:
-                ustepPos[i] = currentPos[i]
-            else:
-                if scaled:
-                    ustepPos[i] = np.round(pos[i] / self.scale[i])
-                else:
-                    ustepPos[i] = pos[i]
-
-        if np.all(np.abs(ustepPos-np.asarray(currentPos)) < 16):
-            # step is too small; MPC200 will ignore this command and will not return \r
-            return tuple([currentPos[i] * self.scale[i] for i in (0, 1, 2)])
+                pos[i] = 0
+        
+        # step below C843 precision
+        if np.all(np.abs(pos) < self.locationPrecision):
+            print 'aborted since relative move too small', np.abs(pos), self.locationPrecision
+            return tuple(currentPos)
 
         # be sure to never request out-of-bounds position
-        for i,x in enumerate(ustepPos):
-            if not (0 <= x < (25e-3 / self.scale[i])):
-                raise ValueError("Invalid coordinate %d=%g; must be in [0, 25e-3]" % (i, x * self.scale[i]))
+        for i in range(3):
+            if not (0 <= (currentPos[i]+pos[i]) < (25.e-3)):
+                raise ValueError("Invalid coordinate %d : %g must be in [0, 25.e-3]" % (i, (currentPos[i]+pos[i])))
 
-        if timeout is None:
-            # maximum distance to be travelled along any axis
-            dist = (np.abs(ustepPos - currentPos) * self.scale).max()
-            v = self.speedTable[speed]
-            timeout = 1.0 + 1.5 * dist / v
-            # print "dist, speed, timeout:", dist, v, timeout
+        #if timeout is None:
+        #    # maximum distance to be travelled along any axis
+        #    dist = (np.abs(ustepPos - currentPos) * self.scale).max()
+        #    v = self.speedTable[speed]
+        #    timeout = 1.0 + 1.5 * dist / v
+        #    # print "dist, speed, timeout:", dist, v, timeout
 
         # Send move command
-        self.readAll()
-        if speed == 'fast':
-            cmd = b'M' + struct.pack('<lll', *ustepPos)
-            self.write(cmd)
-        else:
-            #self.write(b'O')  # position updates on (these are broken in mpc200?)
-            # self.write(b'F')  # position updates off
-            # self.read(1, term='\r')
-            self.write(b'S')
-            # MPC200 crashes if the entire packet is written at once; this sleep is mandatory
-            time.sleep(0.03)
-            self.write(struct.pack('<B3i', speed, *ustepPos))
-
-        # wait for move to complete
+        #self.readAll()
+        #if speed == 'fast':
+        #    cmd = b'M' + struct.pack('<lll', *ustepPos)
+        #    self.write(cmd)
+        #else:
+        #    #self.write(b'O')  # position updates on (these are broken in mpc200?)
+        #    # self.write(b'F')  # position updates off
+        #    # self.read(1, term='\r')
+        #    self.write(b'S')
+        #    # MPC200 crashes if the entire packet is written at once; this sleep is mandatory
+        #    time.sleep(0.03)
+        #    self.write(struct.pack('<B3i', speed, *ustepPos))
+        
+        # wait for any movement to finish 
+        isMoving = True
+        while isMoving:
+            self.s.send('checkMovement')
+            ans = self.s.recv(self.sizeOfDataPackage)
+            mov = self.convertResponse(ans)
+            print ans
+            if not mov :
+                isMoving = False
+            time.sleep(0.3)
+        
         try:
-            self._moving = True
-            self.read(1, term='\r', timeout=timeout)
-        except DataError:
-            # If the move is interrupted, sometimes we get junk on the serial line.
-            time.sleep(0.03)
-            self.readAll()
-        except TimeoutError:
-            # just for debugging
-            print "start pos:", currentPos, "move pos:", ustepPos
-            raise
-        finally:
-            self._moving = False
+            for i in range(3):
+                if pos[i]:
+                    posSent = pos[i]*self.conversion
+                    self.s.send('relativeMoveTo,%s,%s' % (self.axes[i],posSent))
+                    ans = self.s.recv(self.sizeOfDataPackage)
+                    print ans
+        except sock.error as err:
+            raise err
+        
+        
+        # wait for move to complete
+        #try:
+        #    self._moving = True
+        #    self.read(1, term='\r', timeout=timeout)
+        #except DataError:
+        #    # If the move is interrupted, sometimes we get junk on the serial line.
+        #    time.sleep(0.03)
+        #    self.readAll()
+        #except TimeoutError:
+        #    # just for debugging
+        #    print "start pos:", currentPos, "move pos:", ustepPos
+        #    raise
+        #finally:
+        #    self._moving = False
 
         # finally, make sure we ended up at the right place.
-        newPos = self.getPos(scaled=False)[1]
-        scaled = tuple([newPos[i] * self.scale[i] for i in (0, 1, 2)])
+        newPos = self.getPos()
+        #newPos = tuple([currentPos[i]/self.conversion for i in [1,2,3]])
+        #for i in range(3):
+        #    if abs(newPos[i] - pos[i]) > self.locationPrecision:
+        #        err = RuntimeError("Move was unsuccessful (%r != %r)."  % (tuple(newPos), tuple(ustepPos)))
+        #        err.lastPosition = newPos
+        #        raise err
+        return newPos
+    @threadsafe
+    def moveTo(self, pos, timeout=None):
+        """Make a absolute move of stage.
+        
+        Any item in the position may be set as None to leave it unchanged.
+        
+        *speed* may be specified as an integer 0-15 for constant speed, or 
+        'fast' indicating that the drive should use acceleration to move as
+        quickly as possible. For constant speeds, a value of 15 is maximum,
+        about 1.3mm/sec for the _fastest moving axis_, not for the net speed
+        of all three axes.
+
+        If *timeout* is None, then a suitable timeout is chosen based on the selected 
+        speed and distance to be traveled.
+        
+        Positions must be specified in meters unless *scaled* = False, in which 
+        case position is specified in motor steps. 
+
+        This method will either 1) block until the move is complete and return the 
+        final position, 2) raise TimeoutError if the timeout has elapsed or, 3) raise 
+        RuntimeError if the move was unsuccessful (final position does not match the 
+        requested position). Exceptions contain the final position as `ex.lastPosition`.
+        """
+
+        currentPos = self.getPos()
+        
+        # replace none entries with current position values
+        pos = np.asarray(pos)
         for i in range(3):
-            if abs(newPos[i] - ustepPos[i]) > 1:
-                err = RuntimeError("Move was unsuccessful (%r != %r)."  % (tuple(newPos), tuple(ustepPos)))
-                err.lastPosition = scaled
+            if pos[i] is None:
+                pos[i] = currentPos[i]
+        
+        # step below C843 precision
+        if np.all(np.abs(pos-np.asarray(currentPos)) < self.locationPrecision):
+            return tuple(currentPos)
+
+        # be sure to never request out-of-bounds position
+        for i in range(3):
+            if not (0 <= pos[i] < (25.e-3)):
+                raise ValueError("Invalid coordinate %d : %g must be in [0, 25.e-3]" % (i, pos[i]))
+
+        #if timeout is None:
+        #    # maximum distance to be travelled along any axis
+        #    dist = (np.abs(ustepPos - currentPos) * self.scale).max()
+        #    v = self.speedTable[speed]
+        #    timeout = 1.0 + 1.5 * dist / v
+        #    # print "dist, speed, timeout:", dist, v, timeout
+
+        # Send move command
+        #self.readAll()
+        #if speed == 'fast':
+        #    cmd = b'M' + struct.pack('<lll', *ustepPos)
+        #    self.write(cmd)
+        #else:
+        #    #self.write(b'O')  # position updates on (these are broken in mpc200?)
+        #    # self.write(b'F')  # position updates off
+        #    # self.read(1, term='\r')
+        #    self.write(b'S')
+        #    # MPC200 crashes if the entire packet is written at once; this sleep is mandatory
+        #    time.sleep(0.03)
+        #    self.write(struct.pack('<B3i', speed, *ustepPos))
+        
+        # wait for any movement to finish 
+        isMoving = True
+        while isMoving:
+            self.s.send('checkMovement')
+            ans = self.s.recv(self.sizeOfDataPackage)
+            mov = self.convertResponse(ans)
+            print ans
+            if not mov :
+                isMoving = False
+            time.sleep(0.3)
+        
+        try:
+            for i in range(3):
+                if (currentPos[i] - pos[i]):
+                    posSent = pos[i]*self.conversion
+                    self.s.send('absoluteMoveTo,%s,%s' % (self.axes[i],posSent))
+                    ans = self.s.recv(self.sizeOfDataPackage)
+                    time.sleep(0.3)
+                    # make another move since precision is low for large movements
+                    self.s.send('absoluteMoveTo,%s,%s' % (self.axes[i],posSent))
+                    ans = self.s.recv(self.sizeOfDataPackage)
+                    print ans
+        except sock.error as err:
+            raise err
+        
+        
+        # wait for move to complete
+        #try:
+        #    self._moving = True
+        #    self.read(1, term='\r', timeout=timeout)
+        #except DataError:
+        #    # If the move is interrupted, sometimes we get junk on the serial line.
+        #    time.sleep(0.03)
+        #    self.readAll()
+        #except TimeoutError:
+        #    # just for debugging
+        #    print "start pos:", currentPos, "move pos:", ustepPos
+        #    raise
+        #finally:
+        #    self._moving = False
+
+        # finally, make sure we ended up at the right place.
+        newPos = self.getPos()
+        #newPos = tuple([currentPos[i]/self.conversion for i in [1,2,3]])
+        for i in range(3):
+            if abs(newPos[i] - pos[i]) > self.locationPrecision:
+                err = RuntimeError("Move was unsuccessful (%r != %r)."  % (newPos[i], pos[i]))
+                err.lastPosition = newPos
                 raise err
-
-        return scaled
-
+        return newPos
+    
     def expectedMoveDuration(self, drive, pos, speed):
         """Return the expected time duration required to move *drive* to *pos* at *speed*.
         """
@@ -180,7 +314,22 @@ class socketStage(socket):
 
         dx = np.abs(np.array(pos) - cpos[:len(pos)]).max()
         return dx / self.speedTable[speed]
-
+    
+    def convertResponse(self, answer):    
+        #print answer, type(answer), len(answer)
+        fanswer = re.findall(r"[-+]?\d*\.\d+|[-+]?\d+",answer)
+        #if not fanswer[0] == '1':
+        #    raise 
+        #print 'convert',fanswer, len(fanswer)
+        if len(fanswer)==1:
+            return int(fanswer[0])
+        
+        pos = np.zeros(3)
+        for i in range(3):
+            pos[i] = float(fanswer[i+1])
+        
+        return pos
+        
     # Disabled--official word from Sutter is that the position updates sent during a move are broken.
     # def readMoveUpdate(self):
     #     """Read a single update packet sent during a move.
@@ -208,7 +357,7 @@ class socketStage(socket):
 
     #     return pos
 
-    def stop(self):
+    def stopMovement(self):
         """Stop moving the active drive.
         """
         # lock before stopping if possible
