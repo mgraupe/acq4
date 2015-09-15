@@ -27,7 +27,7 @@ def threadsafe(method):
     return lockMutex
 
 
-class socketStage():
+class SocketStage():
     """
     Provides access to a stage controlled from a different computer through the network connection.
 
@@ -195,7 +195,7 @@ class socketStage():
         #        raise err
         return newPos
     @threadsafe
-    def moveTo(self, pos, timeout=None):
+    def moveTo(self, pos, speed=None, timeout=None):
         """Make a absolute move of stage.
         
         Any item in the position may be set as None to leave it unchanged.
@@ -307,13 +307,13 @@ class socketStage():
                 raise err
         return newPos
     
-    def expectedMoveDuration(self, drive, pos, speed):
+    def expectedMoveDuration(self, pos, speed):
         """Return the expected time duration required to move *drive* to *pos* at *speed*.
         """
-        cpos = np.array(self.getPos(drive)[1])
+        cPos = self.getPos()
 
-        dx = np.abs(np.array(pos) - cpos[:len(pos)]).max()
-        return dx / self.speedTable[speed]
+        dx = np.abs(np.array(pos) - cPos).max()
+        return dx / 10.
     
     def convertResponse(self, answer):    
         #print answer, type(answer), len(answer)
@@ -356,7 +356,14 @@ class socketStage():
     #         pos.append(struct.unpack('<i', x)[0])
 
     #     return pos
-
+    def stop(self):
+        """Stop moving the active drive.
+        """
+        
+        # lock before stopping if possible
+        self.s.send('stop')
+        ans = self.s.recv(self.sizeOfDataPackage)
+    
     def stopMovement(self):
         """Stop moving the active drive.
         """

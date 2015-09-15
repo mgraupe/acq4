@@ -2,7 +2,7 @@
 import time
 from PyQt4 import QtGui, QtCore
 from ..Stage import Stage, MoveFuture
-from acq4.drivers.SocketStage import socketStage as socketStage_Driver
+from acq4.drivers.SocketStage import SocketStage as socketStage_Driver
 from acq4.util.Mutex import Mutex
 from acq4.util.Thread import Thread
 from acq4.pyqtgraph import debug, ptime
@@ -17,7 +17,7 @@ class ChangeNotifier(QtCore.QObject):
     """Used to send raw (unscaled) stage position updates to other devices. 
     In particular, focus motors may use this to hijack unused ROE axes.
     """
-    sigPositionChanged = QtCore.Signal(object, object, object)
+    sigPositionChanged = QtCore.Signal(object, object)
 
 
 class SocketStage(Stage):
@@ -29,10 +29,10 @@ class SocketStage(Stage):
         ipAddress: <ip address of host server> # eg. '172.20.61.180'
     """
 
-    _pos_cache = [None] * 4
+    _pos_cache = None
     _notifier = ChangeNotifier()
     _monitor = None
-    _drives = [None] * 4
+    _drives = [None]*2
     slowSpeed = 4  # speed to move when user requests 'slow' movement
 
     def __init__(self, man, config, name):
@@ -40,6 +40,8 @@ class SocketStage(Stage):
         self.ipAddress = config.pop('ipAddress')
         self.scale = config.pop('scale', (1, 1, 1))
 
+        self._drives[0] = self
+        
         man.sigAbortAll.connect(self.stop)
 
         self._lastMove = None
@@ -65,7 +67,7 @@ class SocketStage(Stage):
         else:
             return {
                 'getPos': (True, True, True),
-                'setPos': (False, False, False),
+                'setPos': (True, True, True),
                 'limits': (True, True, True),
             }
 
@@ -75,35 +77,35 @@ class SocketStage(Stage):
         self.netS.stop()
 
     @classmethod
-    def _checkPositionChange(cls, drive=None, pos=None):
+    def _checkPositionChange(cls, pos=None):
         ## Anyone may call this function. 
         ## If any drive has changed position, SutterMPC200_notifier will emit 
         ## a signal, and the correct devices will be notified.
-        if drive is None:
-            for dev in cls._drives:
-                if dev is None:
-                    continue
-                drive, pos = dev.dev.getPos()
-                break
-        if drive is None:
-            raise Exception("No MPC200 devices initialized yet.")
-        if pos != cls._pos_cache[drive-1]:
-            oldpos = cls._pos_cache[drive-1]
-            cls._notifier.sigPosChanged.emit(drive, pos, oldpos)
-            dev = cls._drives[drive-1]
-            if dev is None:
-                return False
-            cls._pos_cache[drive-1] = pos
-            pos = [pos[i] * dev.scale[i] for i in (0, 1, 2)]
-            dev.posChanged(pos)
+        #if drive is None:
+        #    for dev in cls._drives:
+        #        if dev is None:
+        #            continue
+        for netS in cls._drives:
+            #print netS
+            pos = netS.netS.getPos()
+            break
+            
+        #        break
+        if pos != cls._pos_cache:
+            oldpos = cls._pos_cache
+            cls._notifier.sigPositionChanged.emit(pos, oldpos)
+            netS = cls._drives[0]
+            netS._pos_cache = pos
+            pos = [pos[i] * netS.scale[i] for i in (0, 1, 2)]
+            netS.posChanged(pos)
 
-            return (drive, pos, oldpos)
+            return (pos, oldpos)
         return False
 
     def _getPosition(self):
         # Called by superclass when user requests position refresh
-        drive, pos = self.dev.getPos(drive=self.drive)
-        self._checkPositionChange(drive, pos) # might as well check while we're here..
+        pos = self.netS.getPos()
+        self._checkPositionChange(pos) # might as well check while we're here..
         pos = [pos[i] * self.scale[i] for i in (0, 1, 2)]
         return pos
 
@@ -122,33 +124,9 @@ class SocketStage(Stage):
         pos = self._toAbsolutePosition(abs, rel)
 
         # convert speed to values accepted by MPC200
-        if speed == 'slow':
-            speed = self.slowSpeed
-        elif speed == 'fast':
-            if linear is True:
-                speed = 15
-            else:
-                speed = 'fast'
-        else:
-            speed = self._getClosestSpeed(speed)
-        
-        self._lastMove = MPC200MoveFuture(self, pos, speed)
+
+        self._lastMove = SocketStageMoveFuture(self, pos, speed)
         return self._lastMove
-
-    def _getClosestSpeed(self, speed):
-        """Return the MPC200 speed value (0-15 or 'fast') that most closely
-        matches the requested *speed* in m/s.
-        """
-        speed = float(speed)
-        minDiff = None
-        bestKey = None
-        for k,v in self.dev.speedTable.items():
-            diff = abs(speed - v)
-            if minDiff is None or diff < minDiff:
-                minDiff = diff
-                bestKey = k
-
-        return bestKey
 
 
 class MonitorThread(Thread):
@@ -176,7 +154,7 @@ class MonitorThread(Thread):
         with self.lock:
             self.interval = i
             
-    def move(self, drive, pos, speed):
+    def move(self, pos, speed):
         """Instruct a drive to move. 
 
         Return an ID that can be used to check on the status of the move until it is complete.
@@ -186,7 +164,7 @@ class MonitorThread(Thread):
                 raise RuntimeError("Stage is already moving.")
             id = self.nextMoveId
             self.nextMoveId += 1
-            self.moveRequest = (id, drive, pos, speed)
+            self.moveRequest = (id, pos, speed)
             self._moveStatus[id] = (None, None)
             
         return id
@@ -229,20 +207,20 @@ class MonitorThread(Thread):
                         interval = min(maxInterval, interval*2)
                 else:
                     # move the drive
-                    mid, drive, pos, speed = moveRequest
+                    mid, pos, speed = moveRequest
                     try:
-                        with self.dev.dev.lock:
+                        with self.dev.netS.lock:
                             # record the move starting time only after locking the device
                             start = ptime.time()
                             with self.lock:
                                 self._moveStatus[mid] = (start, False)
-                            pos = self.dev.dev.moveTo(drive, pos, speed)
-                            self.dev._checkPositionChange(drive, pos)
+                            pos = self.dev.netS.moveTo(pos, speed)
+                            self.dev._checkPositionChange( pos)
                     except Exception as err:
                         debug.printExc('Move error:')
                         try:
                             if hasattr(err, 'lastPosition'):
-                                self.dev._checkPositionChange(drive, err.lastPosition)
+                                self.dev._checkPositionChange(err.lastPosition)
                         finally:
                             with self.lock:
                                 self._moveStatus[mid] = (start, err)
@@ -252,11 +230,11 @@ class MonitorThread(Thread):
 
                 time.sleep(interval)
             except:
-                debug.printExc('Error in MPC200 monitor thread:')
+                debug.printExc('Error in Socket Stage monitor thread:')
                 time.sleep(maxInterval)
                 
 
-class MPC200MoveFuture(MoveFuture):
+class SocketStageMoveFuture(MoveFuture):
     """Provides access to a move-in-progress on an MPC200 drive.
     """
     def __init__(self, dev, pos, speed):
@@ -264,14 +242,14 @@ class MPC200MoveFuture(MoveFuture):
         
         # because of MPC200 idiosyncracies, we must coordinate with the monitor
         # thread to do a move.
-        self._expectedDuration = dev.dev.expectedMoveDuration(dev.drive, pos, speed)
+        self._expectedDuration = dev.netS.expectedMoveDuration(pos, speed)
         scaled = []
         for i in range(3):
             if dev.scale[i] != 0:
                 scaled.append(pos[i] / dev.scale[i])
             else:
                 scaled.append(None)
-        self._id = SutterMPC200._monitor.move(dev.drive, scaled, speed)
+        self._id = SocketStage._monitor.move(scaled, speed)
         self._moveStatus = (None, None)
         while True:
             start, status = self._getStatus()
@@ -306,6 +284,6 @@ class MPC200MoveFuture(MoveFuture):
     def _getStatus(self):
         # check status of move unless we already know it is complete.
         if self._moveStatus[1] in (None, False):
-            self._moveStatus = SutterMPC200._monitor.moveStatus(self._id)
+            self._moveStatus = SocketStage._monitor.moveStatus(self._id)
         return self._moveStatus
         

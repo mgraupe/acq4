@@ -1,1 +1,1 @@
-from netStage import socketStage, TimeoutError, socketStageError
+from netStage import SocketStage
