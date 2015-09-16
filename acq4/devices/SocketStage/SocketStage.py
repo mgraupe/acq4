@@ -38,7 +38,7 @@ class SocketStage(Stage):
     def __init__(self, man, config, name):
         self.port = config.pop('port')
         self.ipAddress = config.pop('ipAddress')
-        if ('transform' in self.config) and ('scale' in self.config['transform']):
+        if ('transform' in config) and ('scale' in config['transform']):
             self.scale = config['transform']['scale']
         else:
             self.scale = (1, 1, 1)
