@@ -357,11 +357,9 @@ class SocketStage():
 
     #     return pos
     def stop(self):
-        """Stop moving the active drive.
+        """ disconnect the socket stage
         """
-        
-        # lock before stopping if possible
-        self.s.send('stop')
+        self.s.send('disconnect')
         ans = self.s.recv(self.sizeOfDataPackage)
     
     def stopMovement(self):
