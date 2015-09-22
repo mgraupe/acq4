@@ -194,12 +194,14 @@ class CameraWindow(QtGui.QMainWindow):
             return
         bounds = None
         for k,v in self.interfaces.items():
+            print 'interface : ', k, v, 
             if exclusive is None:
                 br = v.boundingRect()
             elif exclusive==k:
                 br = v.boundingRect()
             else:
                 br = None
+            print br
             if br is None:
                 continue
             if bounds is None:
@@ -207,6 +209,7 @@ class CameraWindow(QtGui.QMainWindow):
             else:
                 bounds |= br
         if bounds is not None:
+            print 'bounds : ', bounds
             self.setRange(bounds)
         
     def autoRange(self, item=None):

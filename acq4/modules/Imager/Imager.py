@@ -655,8 +655,12 @@ class Imager(Module):
             self.singleFlip=True
             self.ui.zoomTenthBox.setValue(0)
         zoom = zoomS + zoomT/10.
+        state = self.currentRoi.getState()
+        print 'Zoom action'
+        print 'state[size], state[pos] : ', state['size'], state['pos']
         cpos = self.scannerDev.mapToGlobal((0,0)) # get center position in scanner coordinates
         csize = self.scannerDev.mapToGlobal((self.fieldSize, self.fieldSize))
+        print 'cpos, csize : ', cpos, csize
         width  = csize[0]/zoom # width is x in M
         height = csize[1]/zoom
         csize = pg.Point(width, height)
