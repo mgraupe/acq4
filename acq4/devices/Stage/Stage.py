@@ -45,7 +45,7 @@ class Stage(Device, OptomechDevice):
         self._progressTimer.timeout.connect(self.updateProgressDialog)
 
         dm.declareInterface(name, ['stage'], self)
-        self.manager = dm
+        #self.manager = dm
     def quit(self):
         self.stop()
 
@@ -430,7 +430,7 @@ class StageInterface(QtGui.QWidget):
         self.update()
 
     def update(self):
-        print self.dev.manager.devices
+        #print self.dev.manager.devices
         #dev1 = self.dev.manager.getDevice[config['Microscope'])
         #dev2 = dev1.parentDevice()
         #print dev1 #, dev2
