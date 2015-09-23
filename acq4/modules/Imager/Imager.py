@@ -994,7 +994,7 @@ class Imager(Module):
         """
         Return bounding rect of this imaging device in global coordinates
         """
-        globalCoords=True
+        globalCoords=False #True
         #print slf.fieldSize
         state = self.currentRoi.getState()
         cpos = state['pos']
@@ -1002,8 +1002,8 @@ class Imager(Module):
         
         objScale = self.scannerDev.parentDevice().getObjective().scale().x()
         
-        cpos  = tuple(i/objScale for i in cpos)
-        csize = tuple(j/objScale for j in csize)
+        cpos  = tuple(i/1. for i in cpos)
+        csize = tuple(j/1. for j in csize)
         
         bounds = QtGui.QPainterPath()
         bounds.addRect(QtCore.QRectF(cpos[0], cpos[1], *csize))
