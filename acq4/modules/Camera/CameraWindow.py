@@ -572,8 +572,8 @@ class ImageSequencer(QtGui.QWidget):
             else:
                 prot['zStackValues'] = list(np.arange(start, end, spacing))
             dev = self.selectedImager() # ImagerCamModInterface
-            dev = imager.getDevice() # Imager
-            prot['surfaceLocation'] = dev.scannerDev.parentDevice().getSurfaceDepth()
+            imager = dev.getDevice() # Imager
+            prot['surfaceLocation'] = imager.scannerDev.parentDevice().getSurfaceDepth()
         else:
             prot['zStackValues'] = [None]
 
