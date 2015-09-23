@@ -554,6 +554,11 @@ class ImageSequencer(QtGui.QWidget):
             'zStack': self.ui.zStackGroup.isChecked(),
             'timelapse': self.ui.timelapseGroup.isChecked(),
         }
+        
+        dev = self.selectedImager() # ImagerCamModInterface
+        dev = dev.getDevice() # Imager
+        prot['surfaceLocation'] = dev.scannerDev.parentDevice().getSurfaceDepth()
+        
         if prot['zStack']:
             start = self.ui.zStartSpin.value()
             end = self.ui.zEndSpin.value()
