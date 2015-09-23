@@ -385,6 +385,7 @@ class StageInterface(QtGui.QWidget):
         self.setLayout(self.layout)
         self.axCtrls = {}
         self.posLabels = {}
+        self.relativePosLabels = {}
         self.limitChecks = {}
 
         cap = dev.capabilities()
@@ -396,7 +397,9 @@ class StageInterface(QtGui.QWidget):
                 axLabel.setMaximumWidth(15)
                 posLabel = QtGui.QLabel('0')
                 self.posLabels[axis] = posLabel
-                widgets = [axLabel, posLabel]
+                relativePosLabel = QtGui.QLabel('0')
+                self.relativePosLabels[axis] = relativePosLabel
+                widgets = [axLabel, posLabel, relativePosLabel]
                 if cap['limits'][axis]:
                     minCheck = QtGui.QCheckBox('Min:')
                     minCheck.tag = (axis, 0)
@@ -427,12 +430,18 @@ class StageInterface(QtGui.QWidget):
         self.update()
 
     def update(self):
+        dev1 = self.dev.parentDevice()
+        dev2 = dev1.parentDevice()
+        print dev1, dev2
         pos = self.dev.getPosition()
+        surface = self.dev.getPosition()
         for i in range(3):
             if i not in self.posLabels:
                 continue
             text = pg.siFormat(pos[i], suffix='m', precision=5)
+            relText = pg.siFormat(pos[i]-surface[i], suffix='m', precision=5)
             self.posLabels[i].setText(text)
+            self.relativePosLabels[i].setText(relText)
 
     def updateLimits(self):
         limits = self.dev.getLimits()
