@@ -36,13 +36,14 @@ class SocketStage(Stage):
     slowSpeed = 4  # speed to move when user requests 'slow' movement
 
     def __init__(self, man, config, name):
-        self.port = config.pop('port')
-        self.ipAddress = config.pop('ipAddress')
+        port = config.pop('port')
+        ipAddress = config.pop('ipAddress')
         if ('transform' in config) and ('scale' in config['transform']):
             self.scale = config['transform']['scale']
         else:
             self.scale = (1, 1, 1)
-
+        precision = config.pop('precision',1.E-6)
+        
         self._drives[0] = self
         
         man.sigAbortAll.connect(self.stop)
@@ -51,7 +52,7 @@ class SocketStage(Stage):
 
         Stage.__init__(self, man, config, name)
         
-        self.netS = socketStage_Driver(self.ipAddress,self.port)
+        self.netS = socketStage_Driver(ipAddress,port,precision)
         
         # clear cached position for this device and re-read to generate an initial position update
         self._pos_cache = None
