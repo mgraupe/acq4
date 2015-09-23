@@ -113,7 +113,7 @@ class SpinBox(QtGui.QAbstractSpinBox):
             'delayUntilEditFinished': True,   ## do not send signals until text editing has finished
             
             ## for compatibility with QDoubleSpinBox and QSpinBox
-            'decimals': 2,
+            'decimals': 4,
             
         }
         
