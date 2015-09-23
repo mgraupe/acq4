@@ -45,7 +45,7 @@ class SocketStage():
         dev.moveTo(1, [10e-3, 0, 0], 'fast')
     """
 
-    def __init__(self, ipAddress,portOnHost):
+    def __init__(self, ipAddress,portOnHost,precision):
         
         self.s = sock.socket(sock.AF_INET, sock.SOCK_STREAM) #create a socket object
         self.host = ipAddress
@@ -55,7 +55,8 @@ class SocketStage():
         # stage operates in microns and ACQ4 in meters
         self.conversion = 1.E6
         
-        self.locationPrecision = 1.E-6
+        self.locationPrecision = precision
+        print precision
         self.axes = collections.OrderedDict([(0,'x'),(1,'y'),(2,'z')])
         
         self.s.connect((self.host,self.port))
