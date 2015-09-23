@@ -189,12 +189,18 @@ class CameraWindow(QtGui.QMainWindow):
         self.depthDock.show()
         return self.depthPlot
 
-    def centerView(self):
+    def centerView(self,exclusive=None):
         if len(self.interfaces) == 0:
             return
         bounds = None
-        for iface in self.interfaces.values():
-            br = iface.boundingRect()
+        for k,v in self.interfaces.items():
+            if exclusive is None:
+                br = v.boundingRect()
+            elif exclusive==k:
+                br = v.boundingRect()
+            else:
+                br = None
+            print br
             if br is None:
                 continue
             if bounds is None:
@@ -555,9 +561,7 @@ class ImageSequencer(QtGui.QWidget):
             'timelapse': self.ui.timelapseGroup.isChecked(),
         }
         
-        dev = self.selectedImager() # ImagerCamModInterface
-        dev = dev.getDevice() # Imager
-        prot['surfaceLocation'] = dev.scannerDev.parentDevice().getSurfaceDepth()
+        
         
         if prot['zStack']:
             start = self.ui.zStartSpin.value()
@@ -567,12 +571,18 @@ class ImageSequencer(QtGui.QWidget):
                 prot['zStackValues'] = list(np.arange(start, end, -spacing))
             else:
                 prot['zStackValues'] = list(np.arange(start, end, spacing))
+            dev = self.selectedImager() # ImagerCamModInterface
+            dev = imager.getDevice() # Imager
+            prot['surfaceLocation'] = dev.scannerDev.parentDevice().getSurfaceDepth()
         else:
             prot['zStackValues'] = [None]
 
         if prot['timelapse']:
             prot['timelapseCount'] = self.ui.iterationsSpin.value()
             prot['timelapseInterval'] = self.ui.intervalSpin.value()
+            dev = self.selectedImager() # ImagerCamModInterface
+            dev = imager.getDevice() # Imager
+            prot['surfaceLocation'] = dev.scannerDev.parentDevice().getSurfaceDepth()
         else:
             prot['timelapseCount'] = 1
             prot['timelapseInterval'] = 0
