@@ -56,7 +56,6 @@ class SocketStage():
         self.conversion = 1.E6
         
         self.locationPrecision = precision
-        print precision
         self.axes = collections.OrderedDict([(0,'x'),(1,'y'),(2,'z')])
         
         self.s.connect((self.host,self.port))
