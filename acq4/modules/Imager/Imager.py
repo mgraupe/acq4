@@ -658,8 +658,8 @@ class Imager(Module):
         state = self.currentRoi.getState()
         print 'Zoom action'
         print 'state[size], state[pos] : ', state['size'], state['pos']
-        cpos = self.scannerDev.mapToGlobal((0,0)) # get center position in scanner coordinates
-        csize = self.scannerDev.mapToGlobal((self.fieldSize, self.fieldSize))
+        cpos = state['pos'] +  state['size']/2. #self.scannerDev.mapToGlobal((0,0)) # get center position in scanner coordinates
+        csize = state['size']# self.scannerDev.mapToGlobal((self.fieldSize, self.fieldSize))
         print 'cpos, csize : ', cpos, csize
         width  = csize[0]/zoom # width is x in M
         height = csize[1]/zoom
