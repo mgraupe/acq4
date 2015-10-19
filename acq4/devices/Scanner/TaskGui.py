@@ -308,9 +308,9 @@ class ScannerTaskGui(TaskGui):
         self.restoreState(state)
         
     def reCenterScanPrograms(self):
-        pos = self.getViewBox().viewRect().center() 
-        print 'pos :',pos
-        print 'state : ',state
+        dev = self.dev.getFocusDevice()
+        newPos = dev.globalPosition()
+        self.scanProgram.reCenterComponent([newPos[0],newPos[1]])
         
     def listSequence(self):
         #items = self.activeItems()
