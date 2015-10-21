@@ -69,7 +69,7 @@ class SpinBox(QtGui.QAbstractSpinBox):
                        'step' values when dec=True are 0.1, 0.2, 0.5, and 1.0. Default is False.
         minStep        (float) When dec=True, this specifies the minimum allowable step size.
         int            (bool) if True, the value is forced to integer type. Default is False
-        decimals       (int) Number of decimal values to display. Default is 2. 
+        precision      (int) Number of significant digits to display. Default is 3. 
         ============== ========================================================================
         """
         QtGui.QAbstractSpinBox.__init__(self, parent)
@@ -112,9 +112,10 @@ class SpinBox(QtGui.QAbstractSpinBox):
             
             'delayUntilEditFinished': True,   ## do not send signals until text editing has finished
             
+            'precision': 3,
+            
             ## for compatibility with QDoubleSpinBox and QSpinBox
             'decimals': 4,
-            
         }
         
         self.decOpts = ['step', 'minStep']
@@ -192,8 +193,6 @@ class SpinBox(QtGui.QAbstractSpinBox):
         
         self.updateText()
 
-
-
     def setMaximum(self, m, update=True):
         """Set the maximum allowed value (or None for no limit)"""
         if m is not None:
@@ -231,7 +230,13 @@ class SpinBox(QtGui.QAbstractSpinBox):
     def setSingleStep(self, step):
         self.setOpts(step=step)
         
+    def setPrecision(self, p):
+        """Set the number of significant digits to display.
+        """
+        self.setOpts(precision=p)
+        
     def setDecimals(self, decimals):
+        # Note: non-functional for now; provided as workaround for uic files that set this property.
         self.setOpts(decimals=decimals)
         
     def selectNumber(self):
@@ -378,7 +383,7 @@ class SpinBox(QtGui.QAbstractSpinBox):
                 (s, p) = fn.siScale(prev)
                 txt = "0.0 %s%s" % (p, self.opts['suffix'])
             else:
-                txt = fn.siFormat(float(self.val), suffix=self.opts['suffix'])
+                txt = fn.siFormat(float(self.val), suffix=self.opts['suffix'], precision=self.opts['precision'])
         else:
             txt = '%g%s' % (self.val , self.opts['suffix'])
         self.lineEdit().setText(txt)
