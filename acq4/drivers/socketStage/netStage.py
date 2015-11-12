@@ -273,11 +273,7 @@ class SocketStage():
                     posSent = pos[i]*self.conversion
                     self.s.send('absoluteMoveTo,%s,%s' % (self.axes[i],posSent))
                     ans = self.s.recv(self.sizeOfDataPackage)
-                    time.sleep(0.3)
-                    # make another move since precision is low for large movements
-                    self.s.send('absoluteMoveTo,%s,%s' % (self.axes[i],posSent))
-                    ans = self.s.recv(self.sizeOfDataPackage)
-                    print ans
+                    #print i,pos[i],currentPos[i],posSent,ans 
         except sock.error as err:
             raise err
         
