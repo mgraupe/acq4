@@ -113,6 +113,22 @@ class PCOCameraClass:
         self.isOpen = False
         self.open()
         
+        self.paramValues = {}   ## storage for local params and cache for remote params
+                                ## remote params must be cached because reading them can cause
+                                ## the camera to stop.
+        self.paramValues = {  ## list of current values for parameters not handled by driver
+            'binningX': 1,
+            'binningY': 1,
+            'exposure': 0.001,
+            'triggerMode': 'Normal',
+            'regionX': 0,
+            'regionY': 0,
+            'regionW': size[0],
+            'regionH': size[1],
+            'ringSize': 10,
+        }        
+        
+        
         
     def open(self):
         self.cameraHandle = c_void_p()
@@ -128,22 +144,25 @@ class PCOCameraClass:
         if self.isOpen:
             self.call(LIB.CloseCamera,self.cameraHandle)
             self.isOpen = False
-            print 'No open camera'
+            print 'camera closed...'
 
     def call(self, function, *args):
         return self.pcocam.call(function, *args)
     
-	def list_Params(self, params=None):
-		if params is None:
-			print 'Parameters are :'
-			print 'exposure_time=',self.params['exposure_time']
-			print 'time_stamp=',self.params['time_stamp']
-			print 'pixelrate=',self.params['pixelrate']
-			print 'trigger_mode=',self.params['trigger_mode']
-			print 'hor_bin=',self.params['hor_bin']
-			print 'vert_bin=',self.params['vert_bin'],'\n'
-		if params in self.params:
-			print params,'=',self.params[params]
+    def list_Params(self, params=None):
+        print 'LIST...'
+        if params is None:
+            self.call(LIB.getCameraDescription,self.cameraHandle,byref(plist))
+            print plist.value
+			#print 'Parameters are :'
+			#print 'exposure_time=',self.params['exposure_time']
+			#print 'time_stamp=',self.params['time_stamp']
+			#print 'pixelrate=',self.params['pixelrate']
+			#print 'trigger_mode=',self.params['trigger_mode']
+			#print 'hor_bin=',self.params['hor_bin']
+			#print 'vert_bin=',self.params['vert_bin'],'\n'
+		#if params in self.params:
+			#print params,'=',self.params[params]
 		
 	def set_Params(self,exposure_time,time_stamp,pixelrate,trigger_mode,hor_bin,vert_bin):
 		self.set_Params = 1
