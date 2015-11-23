@@ -148,7 +148,10 @@ class ScannerTaskGui(TaskGui):
 
         self.daqChanged(self.daqUI.currentState())
         self.daqUI.sigChanged.connect(self.daqChanged)
-
+        
+        self.focusDev = self.dev.getFocusDevice()
+        self.focusDev.sigPositionChanged.connect(self.positionChanged)
+        
             
     def setHaveCalibration(self, have):
         self.haveCalibration = have
@@ -315,10 +318,14 @@ class ScannerTaskGui(TaskGui):
         self.restoreState(state)
         
     def reCenterScanPrograms(self):
-        dev = self.dev.getFocusDevice()
-        newPos = dev.globalPosition()
+        newPos = self.focusDev.globalPosition()
         self.scanProgram.reCenterComponent([newPos[0],newPos[1]])
+    
+    def positionChanged(self):
+        params = self.scanProgram.ctrlParameter()
+        print 'position change', params
         
+    
     def listSequence(self):
         #items = self.activeItems()
         targets = self.getTargetList()
