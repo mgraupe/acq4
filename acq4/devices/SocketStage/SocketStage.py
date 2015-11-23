@@ -90,13 +90,12 @@ class SocketStage(Stage):
         #        if dev is None:
         #            continue
         for netS in cls._drives:
-            #print netS
             pos = netS.netS.getPos()
             break
             
         #        break
-        if pos != cls._pos_cache:
-            oldpos = cls._pos_cache
+        if pos != netS._pos_cache:
+            oldpos = netS._pos_cache
             cls._notifier.sigPositionChanged.emit(pos, oldpos)
             netS = cls._drives[0]
             netS._pos_cache = pos
@@ -219,7 +218,7 @@ class MonitorThread(Thread):
                             with self.lock:
                                 self._moveStatus[mid] = (start, False)
                             pos = self.dev.netS.moveTo(pos, speed)
-                            self.dev._checkPositionChange( pos)
+                            self.dev._checkPositionChange(pos)
                     except Exception as err:
                         debug.printExc('Move error:')
                         try:
