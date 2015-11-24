@@ -137,7 +137,11 @@ class ScanProgram(QtCore.QObject):
         for component in self.components:
             if component.isActive():
                 component.reCenterComponent(newPos)
-                
+    
+    def getComponentParameter(self):
+        for component in self.components:
+            return component.ctrlParameter()
+    
     def setSampling(self, rate, samples, downsample):
         """Set the sampling properties used by all components in the program:
         sample rate, number of samples, and downsampling factor.

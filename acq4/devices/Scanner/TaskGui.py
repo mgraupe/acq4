@@ -321,11 +321,19 @@ class ScannerTaskGui(TaskGui):
         newPos = self.focusDev.globalPosition()
         self.scanProgram.reCenterComponent([newPos[0],newPos[1]])
     
-    def positionChanged(self):
-        params = self.scanProgram.ctrlParameter()
-        print 'position change', params
-        
-    
+    def positionChanged(self,newPos):
+        params = self.scanProgram.getComponentParameter()
+        if not params.param('followStage').value():
+            oldCenter = [params.system.p2[0]+params.system.width/2.,params.system.p2[1]+params.system.height/2.]
+            #print 'old center ', oldCenter
+            newCenter = list(oldCenter)
+            for i in range(2):
+                newCenter[i] = oldCenter[i] - newPos['rel'][i]
+            #print 'new center ', newCenter
+            self.scanProgram.reCenterComponent([newCenter[0],newCenter[1]])
+            #print 'position change', params.system.p1, params.system.p2, params.system.width, params.system.height #sampleRate
+            #print 'position new',newPos
+
     def listSequence(self):
         #items = self.activeItems()
         targets = self.getTargetList()
