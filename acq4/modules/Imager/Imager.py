@@ -69,7 +69,7 @@ VideoModes = OrderedDict([
     ('512x1', 
       OrderedDict([
         ('Scan Control', {
-            'Sample Rate':900e3,
+            'Sample Rate':450e3,
             'Average': 1,
             'Downsample': 1,
             'Image Width': 512,
@@ -79,14 +79,14 @@ VideoModes = OrderedDict([
             'Bidirectional': True,
          }),
         ('Image Control', {
-            'Decomb': 168e-6,
+            'Decomb': 170e-6,
          }),
        ])
     ),
     ('256x1', 
       OrderedDict([
         ('Scan Control', {
-            'Sample Rate':600e3,
+            'Sample Rate':224e3,
             'Average': 1,
             'Downsample': 1,
             'Image Width': 256,
@@ -96,14 +96,14 @@ VideoModes = OrderedDict([
             'Bidirectional': True,
          }),
         ('Image Control', {
-            'Decomb': 167e-6,
+            'Decomb': 170e-6, 
          }),
        ])
     ),
     ('128x1', 
       OrderedDict([
         ('Scan Control', {
-            'Sample Rate':400e3,
+            'Sample Rate':112e3,
             'Average': 1,
             'Downsample': 1,
             'Image Width': 128,
@@ -113,7 +113,7 @@ VideoModes = OrderedDict([
             'Bidirectional': True,
          }),
         ('Image Control', {
-            'Decomb': 165e-6,
+            'Decomb': 174e-6,
          }),
        ])
     ),
@@ -416,14 +416,14 @@ class Imager(Module):
         self.param = PT.Parameter(name = 'param', children=[
             dict(name='Scan Control', type='group', children=[
                 dict(name='Pockels', type='float', value=0.03, suffix='V', step=0.005, limits=[0, 1.5], siPrefix=True),
-                dict(name='Sample Rate', type='int', value=9e5, suffix='Hz', dec=True, minStep=100., step=0.5, limits=[10e3, 50e6], siPrefix=True),
+                dict(name='Sample Rate', type='int', value=450e3, suffix='Hz', dec=True, minStep=100., step=0.5, limits=[10e3, 50e6], siPrefix=True),
                 dict(name='Downsample', type='int', value=1, limits=[1,None]),
                 dict(name='Average', type='int', value=1, limits=[1,100]),
                 dict(name='Blank Screen', type='bool', value=False),
                 dict(name='Image Width', type='int', value=512, readonly=False, limits=[1, None]),
                 dict(name='Image Height', type='int', value=512, readonly=False, limits=[1, None]),
                 dict(name='Bidirectional', type='bool', value=True),
-                dict(name='Overscan', type='float', value=200e-6, suffix='s', siPrefix=True, limits=[0, None], step=10e-6),
+                dict(name='Overscan', type='float', value=400e-6, suffix='s', siPrefix=True, limits=[0, None], step=10e-6),
                 dict(name='Photodetector', type='list', values=self.detectors),
                 dict(name='Follow Stage', type='bool', value=True),
             ]),
@@ -438,7 +438,7 @@ class Imager(Module):
                 dict(name='Objective', type='str', value='Unknown', readonly=True),
             ]),
             dict(name='Image Control', type='group', children=[
-                dict(name='Decomb', type='float', value=172e-6, suffix='s', siPrefix=True, bounds=[0, 1e-3], step=2e-7, decimals=5, children=[
+                dict(name='Decomb', type='float', value=170e-6, suffix='s', siPrefix=True, bounds=[0, 1e-3], step=2e-7, decimals=5, children=[
                     dict(name='Auto', type='action'),
                     dict(name='Subpixel', type='bool', value=False),
                     ]),
@@ -484,8 +484,7 @@ class Imager(Module):
         self.manager.sigAbortAll.connect(self.abortTask)
         self.cameraModule.window().centerView()
         self.updateImagingProtocol()
-
-
+        
     def quit(self):
         self.abortTask()
         # if self.imageItem is not None and self.imageItem.scene() is not None:
