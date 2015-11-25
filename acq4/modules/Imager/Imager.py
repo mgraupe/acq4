@@ -485,6 +485,9 @@ class Imager(Module):
         self.cameraModule.window().centerView()
         self.updateImagingProtocol()
         
+        state = self.currentRoi.getState()
+        self.defaultROIsize = state['size']
+
     def quit(self):
         self.abortTask()
         # if self.imageItem is not None and self.imageItem.scene() is not None:
@@ -678,6 +681,7 @@ class Imager(Module):
         self.ui.zoomTenthBox.setValue(0)
         self.roiChanged()
         self.cameraModule.window().centerView()
+        
     def zoomRoi(self):
         zoomS = self.ui.zoomSingleBox.value()
         if self.singleFlip:
@@ -689,13 +693,9 @@ class Imager(Module):
             self.ui.zoomTenthBox.setValue(0)
         zoom = zoomS + zoomT/10.
         state = self.currentRoi.getState()
-        #print 'Zoom action'
-        #print 'state[size], state[pos] : ', state['size'], state['pos']
         cpos = state['pos'] +  state['size']/2. #self.scannerDev.mapToGlobal((0,0)) # get center position in scanner coordinates
-        csize = state['size']# self.scannerDev.mapToGlobal((self.fieldSize, self.fieldSize))
-        #print 'cpos, csize : ', cpos, csize
-        width  = csize[0]/zoom # width is x in M
-        height = csize[1]/zoom
+        width  = self.defaultROIsize/zoom # width is x in M
+        height = self.defaultROIsize/zoom
         csize = pg.Point(width, height)
         cpos = cpos - csize/2.
         self.currentRoi.setSize([width, height])
