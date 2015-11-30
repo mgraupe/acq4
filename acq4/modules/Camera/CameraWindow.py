@@ -777,12 +777,13 @@ class SequencerThread(Thread):
         dz = depth - imager.getFocusDepth()
 
         # Avoid hysteresis:
-        if depths[0] > depths[-1] and dz > 0:
-            # stack goes downward
-            imager.setFocusDepth(depth + 20e-6).wait()
-        elif depths[0] < depths[-1] and dz < 0:
-            # stack goes upward
-            imager.setFocusDepth(depth - 20e-6).wait()
+        # those commands prevents the SocketStage to reach the required precision on each stop
+        #if depths[0] > depths[-1] and dz > 0:
+        #    # stack goes downward
+        #    imager.setFocusDepth(depth + 20e-6).wait()
+        #elif depths[0] < depths[-1] and dz < 0:
+        #    # stack goes upward
+        #    imager.setFocusDepth(depth - 20e-6).wait()
 
         imager.setFocusDepth(depth).wait()
 
