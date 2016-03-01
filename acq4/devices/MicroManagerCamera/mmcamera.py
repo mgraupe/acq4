@@ -29,7 +29,10 @@ class MicroManagerCamera(Camera):
                 raise
             # MM does not install itself to standard path. User should take care of this,
             # but we can make a guess..
-            sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
+            MM_PATH = os.path.join('C:', os.path.sep, 'Program Files','Micro-Manager-1.4')
+            sys.path.append(MM_PATH)
+            os.environ['PATH'] = MM_PATH + ';' + os.environ['PATH']
+            #sys.path.append('C:\\Program Files\\Micro-Manager-1.4')
             try:
                 import MMCorePy
             finally:
