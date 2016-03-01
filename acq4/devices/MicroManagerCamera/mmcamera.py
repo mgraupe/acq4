@@ -122,7 +122,7 @@ class MicroManagerCamera(Camera):
 
     def _readAllParams(self):
         # these are parameters expected for all cameras
-        defaultParams = ['exposure', 'binningX', 'binningY', 'regionX', 'regionY', 'regionW', 'regionH', 'triggerMode', 'bitDepth']
+        defaultParams = ['exposure', 'Binning', 'regionX', 'regionY', 'regionW', 'regionH', 'Triggermode', 'bitDepth']
 
         with self.camLock:
             params = OrderedDict([(n, None) for n in defaultParams])
@@ -147,14 +147,15 @@ class MicroManagerCamera(Camera):
                     vals = tuple([v * 1e-3 for v in vals])
                 elif prop == 'Binning':
                     vals = [v.split('x') for v in vals]
-                    params['binningX'] = ([int(v[0 % len(v)]) for v in vals], not readonly, True, [])
-                    params['binningY'] = ([int(v[1 % len(v)]) for v in vals], not readonly, True, [])
+                    params['Binning'] = ([int(v[0 % len(v)]) for v in vals], not readonly, True, [])
+                    #params['binningY'] = ([int(v[1 % len(v)]) for v in vals], not readonly, True, [])
                     #params['binningX'] = ([int(v[0]) for v in vals], not readonly, True, [])
                     #params['binningY'] = ([int(v[1]) for v in vals], not readonly, True, [])
                     continue
-                elif prop == 'Trigger':
-                    prop = 'triggerMode'
-                    vals = [{'NORMAL': 'Normal', 'START': 'TriggerStart'}[v] for v in vals]
+                elif prop == 'Triggermode':
+                    prop = 'Triggermode'
+                    vals = [v for v in vals]
+                    #vals = [{'NORMAL': 'Normal', 'START': 'TriggerStart'}[v] for v in vals]
                 elif prop == 'PixelType':
                     prop = 'bitDepth'
                     vals = [int(bd.rstrip('bit')) for bd in vals]
@@ -175,7 +176,8 @@ class MicroManagerCamera(Camera):
                 'regionW': [(1, rgn[2], 1), True, True, []],
                 'regionH': [(1, rgn[3], 1), True, True, []],
             })
-
+        #print 'mmcamera params : ', params
+        
         self._allParams = params
 
     def listParams(self, params=None):
@@ -253,9 +255,10 @@ class MicroManagerCamera(Camera):
             value = value * 1e3
             param = 'Exposure'
 
-        elif param == 'triggerMode':
-            value = {'Normal': 'NORMAL', 'TriggerStart': 'START'}[value]
-            param = 'Trigger'
+        elif param == 'Triggermode':
+            value = value
+            #value = {'Normal': 'NORMAL', 'TriggerStart': 'START'}[value]
+            param = 'Triggermode'
 
         with self.camLock:
             self.mmc.setProperty(self.camName, str(param), str(value))
@@ -280,7 +283,7 @@ class MicroManagerCamera(Camera):
             'binning': 'Binning',
             'binningX': 'Binning',
             'binningY': 'Binning',
-            'triggerMode': 'Trigger',
+            'triggerMode': 'Triggermode',
             'bitDepth': 'PixelType',
         }.get(param, param)
         with self.camLock:
