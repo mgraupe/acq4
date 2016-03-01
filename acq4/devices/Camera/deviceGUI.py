@@ -43,6 +43,9 @@ class CameraDeviceGui(QtGui.QWidget):
                     elif len(p[0]) == 2:
                         (mn, mx) = p[0]
                         step = 1
+                    elif len(p[0]) == 0:
+                        (mn,mx) = (10.E-6,100.)
+                        step = 1
                     if type(mx) in [int, long] and type(mn) in [int, long]:
                         params.append({'name': k, 'type': 'int', 'value': val, 'limits': (mn, mx), 'step': step})
                     else:
