@@ -147,8 +147,10 @@ class MicroManagerCamera(Camera):
                     vals = tuple([v * 1e-3 for v in vals])
                 elif prop == 'Binning':
                     vals = [v.split('x') for v in vals]
-                    params['binningX'] = ([int(v[0]) for v in vals], not readonly, True, [])
-                    params['binningY'] = ([int(v[1]) for v in vals], not readonly, True, [])
+                    params['binningX'] = ([int(v[0 % len(v)]) for v in vals], not readonly, True, [])
+                    params['binningY'] = ([int(v[1 % len(v)]) for v in vals], not readonly, True, [])
+                    #params['binningX'] = ([int(v[0]) for v in vals], not readonly, True, [])
+                    #params['binningY'] = ([int(v[1]) for v in vals], not readonly, True, [])
                     continue
                 elif prop == 'Trigger':
                     prop = 'triggerMode'
@@ -161,7 +163,8 @@ class MicroManagerCamera(Camera):
 
             # Reset ROI to full frame so we know the native resolution
             self.mmc.setCameraDevice(self.camName)
-            self.mmc.setProperty(self.camName, 'Binning', '1x1')
+            self.mmc.setProperty(self.camName, 'Binning', '1')
+            #self.mmc.setProperty(self.camName, 'Binning', '1x1')
             self.mmc.clearROI()
             rgn = self.mmc.getROI(self.camName)
             self._sensorSize = rgn[2:]
