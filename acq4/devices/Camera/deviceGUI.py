@@ -67,7 +67,6 @@ class CameraDeviceGui(QtGui.QWidget):
                 #self.stateGroup.addWidget(w, k)
             #self.ui.formLayout_2.addRow(k, w)
         #self.stateGroup.sigChanged.connect(self.stateChanged)
-        
         self.paramSet = Parameter(name='cameraParams', type='group', children=params)
         self.paramWidget = ParameterTree()
         self.paramWidget.setParameters(self.paramSet, showTop=False)
