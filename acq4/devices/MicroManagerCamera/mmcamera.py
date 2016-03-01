@@ -300,7 +300,10 @@ class MicroManagerCamera(Camera):
         elif param == 'binningX':
             return int(val.split('x')[0])
         elif param == 'binning':
-            return tuple([int(b) for b in val.split('x')])
+            if type(val) == int:
+                return (val,val)
+            else:
+                return tuple([int(b) for b in val.split('x')])
         elif param == 'exposure':
             # ms to s
             val = val * 1e-3
