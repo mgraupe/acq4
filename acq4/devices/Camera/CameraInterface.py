@@ -144,7 +144,7 @@ class CameraInterface(CameraModuleInterface):
             try:
                 bins = self.cam.listParams('binning')[0][0]
             except:
-                bins = self.cam.listParams('Binning')[0]
+                bins = self.cam.listParams('binningX')[0]
             bins.sort()
             bins.reverse()
             for b in bins:
@@ -238,8 +238,8 @@ class CameraInterface(CameraModuleInterface):
         #self.backgroundFrame = None
         if ind is not None:
             self.binning = int(self.ui.binningCombo.itemText(ind))
-        self.cam.setParam('Binning', (self.binning), autoRestart=autoRestart)
-        #self.cam.setParam('binning', (self.binning, self.binning), autoRestart=autoRestart)
+        #self.cam.setParam('Binning', (self.binning), autoRestart=autoRestart)
+        self.cam.setParam('binning', (self.binning, self.binning), autoRestart=autoRestart)
         #self.clearFrameBuffer()
         ###self.updateRgnLabel()
 
@@ -274,8 +274,8 @@ class CameraInterface(CameraModuleInterface):
         """User clicked the acquire video button.
         """
         try:
-            self.cam.setParam('Triggermode', 'Internal', autoRestart=False)
-            #self.cam.setParam('triggerMode', 'Normal', autoRestart=False)
+            #self.cam.setParam('Triggermode', 'Internal', autoRestart=False)
+            self.cam.setParam('triggerMode', 'Normal', autoRestart=False)
             self.setBinning(autoRestart=False)
             self.setExposure(autoRestart=False)
             self.updateRegion(autoRestart=False)
