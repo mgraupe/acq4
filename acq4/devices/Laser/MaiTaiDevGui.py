@@ -137,6 +137,9 @@ class MaiTaiDevGui(LaserDevGui):
         self.ui.turnOnOffBtn.toggled.connect(self.onOffToggled)
         self.ui.InternalShutterBtn.toggled.connect(self.internalShutterToggled)
         self.ui.ExternalShutterBtn.toggled.connect(self.externalShutterToggled)
+        self.ui.externalSwitchBtn.toggled.connect(self.externalSwitchToggled)
+        self.ui.linkLaserExtSwitchCheckBox.toggled.connect(self.linkLaserExtSwitch)
+        self.ui.alignmentModeBtn.toggled.connect(self.alignmentModeToggled)
         self.ui.qSwitchBtn.toggled.connect(self.qSwitchToggled)
         self.ui.checkPowerBtn.clicked.connect(self.dev.outputPower)
         self.ui.powerAlertCheck.toggled.connect(self.powerAlertToggled)
@@ -150,6 +153,7 @@ class MaiTaiDevGui(LaserDevGui):
         self.dev.sigRelativeHumidityChanged.connect(self.relHumidityChanged)
         self.dev.sigPulsingStateChanged.connect(self.pulsingStateChanged)
         self.dev.sigWavelengthChanged.connect(self.wavelengthChanged)
+        self.dev.sigModeChanged.connect(self.modeChanged)
         
         try:
             self.dev.outputPower()  ## check laser power
@@ -206,16 +210,24 @@ class MaiTaiDevGui(LaserDevGui):
             
     def internalShutterToggled(self, b):
         if b:
+            if self.ui.linkLaserExtSwitchCheckBox.isChecked():
+                self.dev.externalSwitchOFF()
+                self.ui.externalSwitchBtn.setChecked(False)
+                self.ui.externalSwitchBtn.setText('External Switch OFF')
             self.dev.openInternalShutter()
             self.ui.InternalShutterBtn.setText('Close Laser Shutter')
             self.ui.InternalShutterLabel.setText('Laser Shutter Open')
-            self.ui.InternalShutterLabel.setStyleSheet("QLabel {color: #0A0}") 
+            self.ui.InternalShutterLabel.setStyleSheet("QLabel {color: #0A0}")
         elif not b:
             self.dev.closeInternalShutter()
             self.ui.InternalShutterBtn.setText('Open Laser Shutter')
             #self.ui.shutterBtn.setStyleSheet("QLabel {background-color: None}")
             self.ui.InternalShutterLabel.setText('Laser Shutter Closed')
             self.ui.InternalShutterLabel.setStyleSheet("QLabel {color: None}")
+            if self.ui.linkLaserExtSwitchCheckBox.isChecked():
+                self.dev.externalSwitchON()
+                self.ui.externalSwitchBtn.setChecked(True)
+                self.ui.externalSwitchBtn.setText('External Switch ON')
     
     def externalShutterToggled(self, b):
         if b:
@@ -228,6 +240,29 @@ class MaiTaiDevGui(LaserDevGui):
             self.ui.ExternalShutterBtn.setText('Open External Shutter')   
             self.ui.ExternalShutterLabel.setText('External Shutter Closed')
             self.ui.ExternalShutterLabel.setStyleSheet("QLabel {color: None}")
+    
+    def externalSwitchToggled(self,b):
+        if b:
+            self.dev.externalSwitchON()
+            self.ui.externalSwitchBtn.setText('External Switch ON')
+        elif not b:
+            self.dev.externalSwitchOFF()
+            self.ui.externalSwitchBtn.setText('External Switch OFF')
+    
+    def linkLaserExtSwitch(self,b):
+        if b:
+            self.ui.externalSwitchBtn.setEnabled(True)
+        elif not b:
+            self.ui.externalSwitchBtn.setEnabled(False)
+    
+    def alignmentModeToggled(self,b):
+        if b:
+            self.dev.acitvateAlignmentMode()
+            self.ui.alignmentModeBtn.setText('Alignment Mode ON')
+        elif not b:
+            self.dev.deacitvateAlignmentMode()
+            self.ui.alignmentModeBtn.setText('Alignment Mode OFF')
+            
     
     def expectedPowerSpinChanged(self, value):
         self.dev.setParam(expectedPower=value)
@@ -318,6 +353,12 @@ class MaiTaiDevGui(LaserDevGui):
             self.ui.relHumidityLabel.setText("?")
         else:
             self.ui.relHumidityLabel.setText(siFormat(humidity, suffix='%'))
+    
+    def modeChanged(self, mode):
+        if mode is None:
+            self.ui.pumpModeLabel.setText("?")
+        else:
+            self.ui.pumpModeLabel.setText(mode)
     
     def pulsingStateChanged(self, pulsing):
         if pulsing:
