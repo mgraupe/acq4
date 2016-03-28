@@ -313,9 +313,9 @@ class RectScan(SystemSolver):
             ('startTime', [None, float, None, 'f']),
             ('interFrameDuration', [None, float, None, 'f']),
             ('interFrameLen', [None, int, None, 'n']),
-            ('numFrames', [None, int, None, 'f']),
+            ('numFrames', [None, int, None, 'nf']),
             ('totalExposure', [None, float, None, 'n']),  # total scanner dwell time per square um (multiplied across all frames)
-            ('totalDuration', [None, float, None, 'n']),
+            ('totalDuration', [None, float, None, 'nf']),
             ])
 
 
@@ -814,6 +814,9 @@ class RectScan(SystemSolver):
 
     def _totalDuration(self):
         return (self.frameLen + self.interFrameLen) * self.numFrames / self.sampleRate
+
+    def _numFrames(self):
+        return int((self.totalDuration * self.sampleRate) / (self.frameLen + self.interFrameLen))
 
     def _rowVector(self):
         nf, ny, nx = self.scanShape
