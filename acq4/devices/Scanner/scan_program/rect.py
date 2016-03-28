@@ -293,6 +293,7 @@ class RectScan(SystemSolver):
             ('activeCols', [None, int, None, 'n']),  # Same as activeShape[1] 
             ('frameLen', [None, int, None, 'n']),
             ('frameExposure', [None, float, None, 'n']),  # scanner dwell time per square um
+            ('frameShape', [None, tuple, None, 'n']),  # (rows, cols); Same as scanShape[1:2]
             ('scanSpeed', [None, float, None, 'n']),
             ('activeOffset', [None, int, None, 'n']),  # Offset, shape, and stride describe
             ('activeShape', [None, tuple, None, 'n']),   # the 'active' scan area excluding overscan
@@ -332,7 +333,7 @@ class RectScan(SystemSolver):
         """
         offset = self.scanOffset
         shape = self.scanShape
-        nf, ny, nx = shape
+        ny, nx = shape
         stride = self.scanStride
         
         dx = self.colVector
@@ -675,14 +676,15 @@ class RectScan(SystemSolver):
         return self.startTime * self.sampleRate
     
     def _scanShape(self):
+        return (self.numFrames,) + self.frameShape
+
+    def _frameShape(self):
         try:
             h = self.numRows
             w = self.numCols
-            f = self.numFrames
-            return (f, h, w)
+            return (h, w)
         except RuntimeError:
             # duration, sample rate, size, and pixel aspect ratio
-            f = self.numFrames
             w = self.width
             h = self.height
             sr = self.sampleRate
@@ -710,9 +712,7 @@ class RectScan(SystemSolver):
             # make sure numCols is a multiple of ds
             numCols = int(numCols / ds) * ds
             numRows = int(maxSamples / numCols)
-            return (f, numRows, numCols)
-
-
+            return (numRows, numCols)
     
     def _scanStride(self):
         return (self.frameLen + self.interFrameLen, self.numCols, 1)
@@ -739,7 +739,7 @@ class RectScan(SystemSolver):
 
     def _numRows(self):
         try:
-            return self.scanShape[1]
+            return self.frameShape[0]
         except RuntimeError:
             pass
 
@@ -767,7 +767,7 @@ class RectScan(SystemSolver):
             pass
 
         try:
-            sw = self.scanShape[2]
+            sw = self.frameShape[1]
             osl = self.osLen
             return sw - osl*2
         except RuntimeError:
@@ -789,7 +789,7 @@ class RectScan(SystemSolver):
 
     def _numCols(self):
         try:
-            return self.scanShape[2]
+            return self.frameShape[1]
         except RuntimeError:
             pass
 
@@ -819,11 +819,11 @@ class RectScan(SystemSolver):
         return int((self.totalDuration * self.sampleRate) / (self.frameLen + self.interFrameLen))
 
     def _rowVector(self):
-        nf, ny, nx = self.scanShape
+        ny, nx = self.frameShape
         return (self.osP2-self.osP0) / ny
 
     def _colVector(self):
-        nf, ny, nx = self.scanShape
+        ny, nx = self.frameShape
         return (self.osP1-self.osP0) / nx
 
     def _scanOrigin(self):
