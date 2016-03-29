@@ -153,6 +153,10 @@ class ScanProgram(QtCore.QObject):
             for component in self.components:
                 component.samplingChanged()
 
+    def setTotalDuration(self,newTotalDuration):
+        for component in self.components:
+            component.setTotalDuration(newTotalDuration)
+    
     def saveState(self):
         """Return a serializable data structure representing the state of the 
         scan program.
