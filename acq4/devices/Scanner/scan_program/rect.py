@@ -813,10 +813,10 @@ class RectScan(SystemSolver):
         return self.numCols * self.numRows
 
     def _totalDuration(self):
-        return (self.frameLen + self.interFrameLen) * self.numFrames / self.sampleRate
+        return (self.frameLen + self.interFrameLen) * self.numFrames / self.sampleRate  + self.startTime
 
     def _numFrames(self):
-        return int((self.totalDuration * self.sampleRate) / (self.frameLen + self.interFrameLen))
+        return int(((self.totalDuration - self.startTime) * self.sampleRate) / (self.frameLen + self.interFrameLen))
 
     def _rowVector(self):
         ny, nx = self.frameShape
