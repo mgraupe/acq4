@@ -187,7 +187,7 @@ class ScannerTaskGui(TaskGui):
         
         self.scanProgram.setCanvas(camMod.ui)
     
-     def taskDurationChanged(self,v,t):
+    def taskDurationChanged(self,v,t):
         if v == 'duration':
             params = self.scanProgram.getComponentParameter()
             if params.param('useTaskDuration').value() and params.param('totalDuration','fixed').value() :
