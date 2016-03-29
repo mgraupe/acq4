@@ -792,6 +792,7 @@ class Imager(Module):
         rparams['pixelAspectRatio'] = 1.0
         rparams['pixelAspectRatio', 'fixed'] = True
         rparams['numFrames'] = scanControl['Average']
+        rparams['numFrames', 'fixed'] = True
 
         rparams.system.solve()
         nSamples = rparams.system.scanStride[0] * rparams.system.numFrames
