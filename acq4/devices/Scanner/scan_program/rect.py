@@ -61,7 +61,10 @@ class RectScanComponent(ScanProgramComponent):
         rs = self.ctrl.params.system
         rs.writeLaserMask(mask)
         return mask
-
+    
+    def setTotalDuration(self,newTotDuration):
+        self.ctrl.setTotDuration(newTotDuration)
+    
     def saveState(self):
         state = ScanProgramComponent.saveState(self)
         state.update(self.ctrl.saveState())
@@ -130,6 +133,10 @@ class RectScanControl(QtCore.QObject):
     def isActive(self):
         return self.params.value()
  
+    def setTotDuration(self,newTotalDuration):
+        self.params['totalDuration'] = newTotalDuration
+        self.update()
+    
     # def setVisible(self, vis):
     #     if vis:
     #         self.roi.setOpacity(1.0)  ## have to hide this way since we still want the children to be visible
@@ -317,6 +324,7 @@ class RectScan(SystemSolver):
             ('numFrames', [None, int, None, 'nf']),
             ('totalExposure', [None, float, None, 'n']),  # total scanner dwell time per square um (multiplied across all frames)
             ('totalDuration', [None, float, None, 'nf']),
+            ('useTaskDuration', [None, bool, None, 'f']),
             ])
 
 
@@ -847,6 +855,7 @@ class RectScanParameter(pTypes.SimpleParameter):
             dict(name='frameDuration', type='float', value=50e-3, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
             dict(name='interFrameDuration', type='float', value=0, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
             dict(name='totalDuration', type='float', value=5e-1, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
+            dict(name='useTaskDuration', type='bool', value=False),
             dict(name='width', readonly=True, type='float', value=2e-5, suffix='m', siPrefix=True, bounds=[1e-6, None], step=1e-6),
             dict(name='height', readonly=True, type='float', value=1e-5, suffix='m', siPrefix=True, bounds=[1e-6, None], step=1e-6),
             dict(name='imageRows', type='int', value=500, limits=[1, None]),
