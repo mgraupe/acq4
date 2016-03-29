@@ -333,7 +333,7 @@ class RectScan(SystemSolver):
         """
         offset = self.scanOffset
         shape = self.scanShape
-        ny, nx = shape
+        ny, nx = shape[1],shape[2] 
         stride = self.scanStride
         
         dx = self.colVector
