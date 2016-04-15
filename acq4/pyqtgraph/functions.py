@@ -2292,11 +2292,12 @@ class SignalBlock(object):
         self.slot = slot
 
     def __enter__(self):
-        disconnect(self.signal, self.slot)
+        self.reconnect = disconnect(self.signal, self.slot)
         return self
 
     def __exit__(self, *args):
-        self.signal.connect(self.slot)
+        if self.reconnect is True:
+            self.signal.connect(self.slot)
 
 
 

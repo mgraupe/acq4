@@ -142,7 +142,6 @@ class ScannerTaskGui(TaskGui):
 
         self.daqChanged(self.daqUI.currentState())
         self.daqUI.sigChanged.connect(self.daqChanged)
-
             
     def setHaveCalibration(self, have):
         self.haveCalibration = have
@@ -185,7 +184,7 @@ class ScannerTaskGui(TaskGui):
         self.opticStateChanged()
         
         self.scanProgram.setCanvas(camMod.ui)
-
+    
     def daqChanged(self, state):
         # Something changed in DAQ; check that we have the correct sample rate
         self.scanProgram.setSampling(state['rate'], state['numPts'], state['downsample'])

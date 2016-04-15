@@ -132,7 +132,7 @@ class ScanProgram:
             self.downsample = downsample
             for component in self.components:
                 component.samplingChanged()
-
+    
     def saveState(self):
         """Return a serializable data structure representing the state of the 
         scan program.
