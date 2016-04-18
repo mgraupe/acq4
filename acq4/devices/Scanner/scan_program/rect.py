@@ -66,9 +66,6 @@ class RectScanComponent(ScanProgramComponent):
         rs.writeLaserMask(mask)
         return mask
     
-    def setTotalDuration(self,newTotDuration):
-        self.ctrl.setTotDuration(newTotDuration)
-    
     def saveState(self):
         state = ScanProgramComponent.saveState(self)
         state.update(self.ctrl.saveState())
@@ -144,10 +141,7 @@ class RectScanControl(QtCore.QObject):
         #print 'ROI newPos', [newPos[0]-w/2.,newPos[1]-h/2.]
         self.update()
  
-    def setTotDuration(self,newTotalDuration):
-        self.params['totalDuration'] = newTotalDuration
-        self.update()
-    
+
     # def setVisible(self, vis):
     #     if vis:
     #         self.roi.setOpacity(1.0)  ## have to hide this way since we still want the children to be visible
@@ -176,6 +170,7 @@ class RectScanControl(QtCore.QObject):
         try:
             self.params.system.sampleRate = self.component().program().sampleRate
             self.params.system.downsample = self.component().program().downsample
+            self.params.setTaskSamples(self.component().program().numSamples)
             self.params.updateSystem()
             try:
                 oswidth = np.linalg.norm(self.params.system.osVector)
@@ -338,7 +333,6 @@ class RectScan(SystemSolver):
             ('numFrames', [None, int, None, 'nf']),
             ('totalExposure', [None, float, None, 'n']),  # total scanner dwell time per square um (multiplied across all frames)
             ('totalDuration', [None, float, None, 'nf']),
-            ('useTaskDuration', [None, bool, None, 'f']),
             ])
 
 
@@ -442,7 +436,6 @@ class RectScan(SystemSolver):
         stride = self.imageStride
 
         if subpixel and fracOffset != 0:
-            print fracOffset
             interp = data[:-1] * (1.0 - fracOffset) + data[1:] * fracOffset
             image = pg.subArray(interp, intOffset, shape, stride)            
         else:
@@ -835,10 +828,10 @@ class RectScan(SystemSolver):
         return self.numCols * self.numRows
 
     def _totalDuration(self):
-        return (self.frameLen + self.interFrameLen) * self.numFrames / self.sampleRate  + self.startTime
+        return (self.frameLen + self.interFrameLen) * self.numFrames / self.sampleRate
 
     def _numFrames(self):
-        return int(((self.totalDuration - self.startTime) * self.sampleRate) / (self.frameLen + self.interFrameLen))
+        return int((self.totalDuration * self.sampleRate) / (self.frameLen + self.interFrameLen))
 
     def _rowVector(self):
         ny, nx = self.frameShape
@@ -862,14 +855,17 @@ class RectScanParameter(pTypes.SimpleParameter):
     Parameter used to control rect scanning settings.
     """
     def __init__(self):
+        # number of samples in task; used to compute task duration
+        self._taskSamples = None 
+
         fixed = [{'name': 'fixed', 'type': 'bool', 'value': True}] # child of parameters that may be determined by the user
         params = [
             dict(name='startTime', type='float', value=0, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
             dict(name='numFrames', type='int', value=1, bounds=[1, None]),
             dict(name='frameDuration', type='float', value=50e-3, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
             dict(name='interFrameDuration', type='float', value=0, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
-            dict(name='totalDuration', type='float', value=5e-1, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2),
-            dict(name='useTaskDuration', type='bool', value=False),
+            dict(name='totalDuration', type='float', value=5e-1, suffix='s', siPrefix=True, bounds=[0., None], step=1e-2, children=[
+                {'name': 'useTaskDuration', 'type': 'bool', 'value': False}]),
             dict(name='width', readonly=True, type='float', value=2e-5, suffix='m', siPrefix=True, bounds=[1e-6, None], step=1e-6),
             dict(name='height', readonly=True, type='float', value=1e-5, suffix='m', siPrefix=True, bounds=[1e-6, None], step=1e-6),
             dict(name='imageRows', type='int', value=500, limits=[1, None]),
@@ -890,7 +886,7 @@ class RectScanParameter(pTypes.SimpleParameter):
         ]
         self.system = RectScan()
         pTypes.SimpleParameter.__init__(self, name='rect_scan', type='bool', value=True, removable=True, renamable=True, children=params)
-
+        
         # add 'fixed' parameters
         for param in self:
             cons = self.system._vars[param.name()][3]
@@ -905,11 +901,21 @@ class RectScanParameter(pTypes.SimpleParameter):
         self.sigTreeStateChanged.connect(self.updateSystem)
         self.updateSystem()
         
-    def updateSystem(self, param=None, changes=None):
+    def updateSystem(self, param=None, changes=()):
         """
         Set all system variables to match the fixed values in the parameter tree.
         """
-        #self.system.reset()
+        for (param, change, value) in changes:
+            # Make sure totalduration.fixed and usetaskduration are in sync
+            if param is self.child('totalDuration', 'useTaskDuration') and change == 'value' and value is True:
+                with pg.SignalBlock(self.sigTreeStateChanged, self.updateSystem):
+                    self['totalDuration', 'fixed'] = value
+                if value is True:
+                    self._updateTaskDuration()
+            elif param is self.child('totalDuration', 'fixed') and change == 'value' and value is False:
+                with pg.SignalBlock(self.sigTreeStateChanged, self.updateSystem):
+                    self['totalDuration', 'useTaskDuration'] = False
+        
         for param in self:
             if 'f' in self.system._vars[param.name()][3]:
                 if param['fixed']:
@@ -917,16 +923,20 @@ class RectScanParameter(pTypes.SimpleParameter):
                 else:
                     setattr(self.system, param.name(), None)
         self.updateAllParams()
+
+    def setTaskSamples(self, n):
+        self._taskSamples = n
+        self._updateTaskDuration()
+        
+    def _updateTaskDuration(self):
+        if self['totalDuration', 'useTaskDuration'] is True:
+            self['totalDuration'] = self._taskSamples / self.system.sampleRate
     
     def updateAllParams(self):
         """
         Update the parameter tree to show all auto-generated values in the system.
         """
-        try:
-            self.sigTreeStateChanged.disconnect(self.updateSystem)
-            reconnect = True
-        except TypeError:
-            reconnect = False
+        reconnect = pg.disconnect(self.sigTreeStateChanged, self.updateSystem)
         try:
             with self.treeChangeBlocker():
                 for param in self:

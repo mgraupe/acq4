@@ -152,8 +152,6 @@ class ScannerTaskGui(TaskGui):
         self.focusDev = self.dev.getFocusDevice()
         self.focusDev.sigPositionChanged.connect(self.positionChanged)
         
-        taskRunner.sigTaskChanged.connect(self.taskDurationChanged)
-            
     def setHaveCalibration(self, have):
         self.haveCalibration = have
         self.updateVisibility()
@@ -199,15 +197,6 @@ class ScannerTaskGui(TaskGui):
         self.opticStateChanged()
         
         self.scanProgram.setCanvas(camMod.ui)
-    
-    def taskDurationChanged(self,v,t):
-        if v == 'duration':
-            params = self.scanProgram.getComponentParameter()
-            if params.param('useTaskDuration').value() and params.param('totalDuration','fixed').value() :
-                print 'use task duration ', params.param('useTaskDuration').value(), params.param('totalDuration','fixed').value()
-                taskDuration = self.taskRunner.getParam('duration')
-                self.scanProgram.setTotalDuration(taskDuration)
-                print taskDuration
     
     def daqChanged(self, state):
         # Something changed in DAQ; check that we have the correct sample rate
