@@ -533,6 +533,12 @@ class RectScan(SystemSolver):
         t = np.arange(nf) * (stride[0] / sr) + (offset / sr)
         return t
 
+    def restoreState(self, state):
+        # strip out any unknown keys (useTaskDuration) before restoring
+        s = dict([item for item in state.items() if item[0] in self._vars])
+        SystemSolver.restoreState(self, s)
+        
+
     ### Functions defining the relationships between variables:
     
     def _width(self):
