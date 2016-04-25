@@ -997,13 +997,9 @@ class RectScanParameter(pTypes.SimpleParameter):
             param.blockSignals(False)
 
     def saveState(self):
-        state = self.system.saveState()
-        # special param, not part of the system solver:
-        state['useTaskDuration'] = self['totalDuration', 'useTaskDuration']
-        return state
+        return self.system.saveState()
     
     def restoreState(self, state):
-        self['totalDuration', 'useTaskDuration'] = state.pop('useTaskDuration', False)
         self.system.restoreState(state)
 
         try:
