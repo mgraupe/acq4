@@ -548,6 +548,12 @@ class RectScan(SystemSolver):
         t = np.arange(nf) * (stride[0] / sr) + (offset / sr)
         return t
 
+    def restoreState(self, state):
+        # strip out any unknown keys (useTaskDuration) before restoring
+        s = dict([item for item in state.items() if item[0] in self._vars])
+        SystemSolver.restoreState(self, s)
+        
+
     ### Functions defining the relationships between variables:
     
     def _width(self):
@@ -997,9 +1003,13 @@ class RectScanParameter(pTypes.SimpleParameter):
             param.blockSignals(False)
 
     def saveState(self):
-        return self.system.saveState()
+        state = self.system.saveState()
+        # special param, not part of the system solver:
+        state['useTaskDuration'] = self['totalDuration', 'useTaskDuration']
+        return state
     
     def restoreState(self, state):
+        self['totalDuration', 'useTaskDuration'] = state.pop('useTaskDuration', False)
         self.system.restoreState(state)
 
         try:
