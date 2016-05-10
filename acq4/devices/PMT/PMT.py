@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from acq4.devices.Device import *
 from acq4.devices.OptomechDevice import OptomechDevice
+from acq4.devices.DAQGeneric import DAQGeneric
 
 class PMT(DAQGeneric, OptomechDevice):
     def __init__(self, dm, config, name):
-        print 'PMT configure'
         omConf = {}
         for k in ['parentDevice', 'transform']:
             if k in config:
