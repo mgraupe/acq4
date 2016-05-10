@@ -2,7 +2,7 @@
 from acq4.devices.Device import *
 from acq4.devices.OptomechDevice import OptomechDevice
 
-class PhotoDetector(DAQGeneric, OptomechDevice):
+class PMT(DAQGeneric, OptomechDevice):
     def __init__(self, dm, config, name):
         print 'PMT configure'
         omConf = {}
@@ -11,8 +11,10 @@ class PhotoDetector(DAQGeneric, OptomechDevice):
                 omConf[k] = config.pop(k)
         OptomechDevice.__init__(self, dm, config, name)
         DAQGeneric.__init__(self, dm, config, name)
+        print omConf
 
     def getFilterDevice(self):
         # return parent filter device or None
+        pass
         
         
