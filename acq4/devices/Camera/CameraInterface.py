@@ -179,20 +179,19 @@ class CameraInterface(CameraModuleInterface):
         pos = tr.getTranslation()
         
         scale = tr.getScale()
-        if self.cam.camName == "Camera":
-            if scale != self.lastCameraScale:
-                anchor = self.view.mapViewToDevice(self.lastCameraPosition)
-                self.view.scaleBy(scale / self.lastCameraScale)
-                pg.QtGui.QApplication.processEvents()
-                anchor2 = self.view.mapDeviceToView(anchor)
-                diff = pos - anchor2
-                self.lastCameraScale = scale
-            else:
-                diff = pos - self.lastCameraPosition
-                
-            self.view.translateBy(diff)
-            self.lastCameraPosition = pos
-            self.cameraItemGroup.setTransform(tr)
+        if scale != self.lastCameraScale:
+            anchor = self.view.mapViewToDevice(self.lastCameraPosition)
+            self.view.scaleBy(scale / self.lastCameraScale)
+            pg.QtGui.QApplication.processEvents()
+            anchor2 = self.view.mapDeviceToView(anchor)
+            diff = pos - anchor2
+            self.lastCameraScale = scale
+        else:
+            diff = pos - self.lastCameraPosition
+            
+        self.view.translateBy(diff)
+        self.lastCameraPosition = pos
+        self.cameraItemGroup.setTransform(tr)
 
     def regionWidgetChanged(self, *args):
         self.updateRegion()
