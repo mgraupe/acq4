@@ -251,11 +251,11 @@ class SuperTask:
         else:
             ## Only digital tasks, configure a fake AI task so we can use the ai sample clock.
             ## Even better: Configure a counter to make a clock..
-            dev = taskDevs[self.daq.Val_AI]
+            dev = taskDevs[self.daq.Val_DI]
             aich = '/%s/ai0' % dev
             self.addChannel(aich, 'ai')
             trigSource = 'ai'  # '/Dev1/ai/SampleClock'
-            key = taskKeys[self.daq.Val_AI]
+            key = (dev,trigSource) #taskKeys[self.daq.Val_AI]
         #deviceFamilies = getDeviceFamilies(taskDevs)
         
         print trigSource, dev, key
