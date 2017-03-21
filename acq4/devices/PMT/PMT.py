@@ -10,23 +10,23 @@ class PMT(DAQGeneric, OptomechDevice):
             if k in config:
                 self.omConf[k] = config.pop(k)
         daqConfig = {}
-        if 'PeltierPower' in config:
-            daqConfig['PeltierPower'] = config['PeltierPower']
+        if 'PeltierPower' in config['channels']:
+            daqConfig['PeltierPower'] = config['channels']['PeltierPower']
             self.hasPeltierPower = True
-         if 'PeltierError' in config:
-            daqConfig['PeltierError'] = config['PeltierError']
+        if 'PeltierError' in config['channels']:
+            daqConfig['PeltierError'] = config['channels']['PeltierError']
             self.hasPeltierError = True
-        if 'PMTPower' in config:
-            daqConfig['PMTPower'] = config['PMTPower']
+        if 'PMTPower' in config['channels']:
+            daqConfig['PMTPower'] = config['channels']['PMTPower']
             self.hasPMTPower = True
-        if 'PMTOverloadError' in config:
-            daqConfig['PMTOverloadError'] = config['PMTOverloadError']
+        if 'PMTOverloadError' in config['channels']:
+            daqConfig['PMTOverloadError'] = config['channels']['PMTOverloadError']
             self.hasPMTOverloadError = True
-        if 'Vcont-ext' in config:
-            daqConfig['VcontExt'] = config['VcontExt']
+        if 'VcontExt' in config['channels']:
+            daqConfig['VcontExt'] = config['channels']['VcontExt']
             self.hasVcontExt = True
-        if 'Vcont-mon' in config:
-            daqConfig['VcontMon'] = config['VcontMon']
+        if 'VcontMon' in config['channels']:
+            daqConfig['VcontMon'] = config['channels']['VcontMon']
             self.hasVcontMon = True
         OptomechDevice.__init__(self, dm, config, name)
         DAQGeneric.__init__(self, dm, daqConfig, name)
