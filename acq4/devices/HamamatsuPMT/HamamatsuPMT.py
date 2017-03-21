@@ -28,13 +28,16 @@ class HamamatsuPMT(PMT):
         self.maiTaiMode = None
         self.maiTaiHistory = None
         
+        
+        PMT.__init__(self, dm, config, name)
+        
         self.hThread = HamamatsuPMTThread(self)
-        self.hThread.sigPMTGainChan.connect(self.gainChanged)
+        self.hThread.sigPMTGainChang.connect(self.gainChanged)
         self.hThread.sigCoolerError.connect(self.coolerError)
         self.hThread.sigOverloadError.connect(self.overloadError)
         self.hThread.start()
         
-        PMT.__init__(self, dm, config, name)
+        
         
         #self.hasShutter = True
         #self.hasTunableWavelength = True
@@ -81,7 +84,7 @@ class HamamatsuPMT(PMT):
     
     def getPMTGain(self):
         with self.hamamatsuLock:    
-            gain = self.getChannelValue('Vcont-mon')
+            gain = self.getChannelValue('VcontMon')
             return gain
     
     def getCoolerStatus(self):
@@ -89,7 +92,7 @@ class HamamatsuPMT(PMT):
             coolerError = self.getChanHolding('PeltierError')
             return coolerError
         
-    def getCoolerError(self):
+    def getOverloadStatus(self):
         with self.hamamatsuLock:   
             overloadError = self.getChanHolding('PMTOverloadError')
             return overloadError
@@ -113,7 +116,7 @@ class HamamatsuPMT(PMT):
     def deviceInterface(self, win):
         return HamamatsuPMTDevGui(self)
     
-class HamamatsuPMTTask(LaserTask):
+class HamamatsuPMTTask(DeviceTask):
     pass
     # This is disabled--internal shutter in coherent laser should NOT be used by ACQ4; use a separate shutter.
     #
@@ -176,8 +179,8 @@ class HamamatsuPMTThread(Thread):
             try:
                 #with self.driverLock:
                 gain = self.dev.getPMTGain()
-                coolerError = self.dev.getCoolerError()
-                overloadError = self.dev.getOverloadError()
+                coolerError = self.dev.getCoolerStatus()
+                overloadError = self.dev.getOverloadStatus()
                     
                 self.sigPMTGainChang.emit(gain)
                 if overloadError:

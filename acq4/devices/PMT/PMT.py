@@ -23,10 +23,10 @@ class PMT(DAQGeneric, OptomechDevice):
             daqConfig['PMTOverloadError'] = config['PMTOverloadError']
             self.hasPMTOverloadError = True
         if 'Vcont-ext' in config:
-            daqConfig['Vcont-ext'] = config['Vcont-ext']
+            daqConfig['VcontExt'] = config['VcontExt']
             self.hasVcontExt = True
         if 'Vcont-mon' in config:
-            daqConfig['Vcont-mon'] = config['Vcont-mon']
+            daqConfig['VcontMon'] = config['VcontMon']
             self.hasVcontMon = True
         OptomechDevice.__init__(self, dm, config, name)
         DAQGeneric.__init__(self, dm, daqConfig, name)
