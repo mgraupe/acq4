@@ -9,8 +9,10 @@ import time
 class HamamatsuPMT(PMT):
 
     sigPMTGainChanged = QtCore.Signal(object)
-    sigCoolerErrorOccurred = QtCore.Signal()
-    sigOverloadErrorOccurred = QtCore.Signal()
+    sigCoolerErrorOccurred = QtCore.Signal(object)
+    sigOverloadErrorOccurred = QtCore.Signal(object)
+    sigPeltierStatus = QtCore.Signal(object)
+    sigPMTPower = QtCore.Signal(object)
     
     def __init__(self, dm, config, name):
         #self.port = config['port']-1  ## windows com ports start at COM1, pyserial ports start at 0
@@ -28,13 +30,15 @@ class HamamatsuPMT(PMT):
         self.maiTaiMode = None
         self.maiTaiHistory = None
         
-        
         PMT.__init__(self, dm, config, name)
         
         self.hThread = HamamatsuPMTThread(self)
         self.hThread.sigPMTGainChang.connect(self.gainChanged)
         self.hThread.sigCoolerError.connect(self.coolerError)
         self.hThread.sigOverloadError.connect(self.overloadError)
+        self.hThread.sigPeltierStat.connect(self.peltierStatus)
+        self.hThread.sigPMTPow.connect(self.PMTPower)
+                
         self.hThread.start()
         
         
@@ -50,7 +54,7 @@ class HamamatsuPMT(PMT):
         
     def isPMTOn(self):
        with self.hamamatsuLock:
-           return bool(self.getChanHolding('PMTPower'))
+           return self.getChanHolding('PMTPower')
        
     def switchPMTOn(self):
         with self.hamamatsuLock:
@@ -62,7 +66,7 @@ class HamamatsuPMT(PMT):
     
     def isPeltierOn(self):
        with self.hamamatsuLock:
-           return bool(self.getChanHolding('PeltierPower'))
+           return self.getChanHolding('PeltierPower')
        
     def switchPeltierOn(self):
         with self.hamamatsuLock:
@@ -89,26 +93,40 @@ class HamamatsuPMT(PMT):
     
     def getCoolerStatus(self):
         with self.hamamatsuLock:   
-            coolerError = self.getChanHolding('PeltierError')
-            return coolerError
+            coolerError = self.getChannelValue('PeltierError')
+            if coolerError:
+                return 'True'
+            else:
+                return 'False'
         
     def getOverloadStatus(self):
         with self.hamamatsuLock:   
-            overloadError = self.getChanHolding('PMTOverloadError')
-            return overloadError
+            overloadError = self.getChannelValue('PMTOverloadError')
+            if overloadError:
+                return 'True'
+            else:
+                return 'False'
         
     def gainChanged(self,gain):
         with self.hamamatsuLock:   
             self.pmtGain = gain
             self.sigPMTGainChanged.emit(gain)
     
-    def coolerError(self):
+    def coolerError(self,coolerError):
         with self.hamamatsuLock:   
-            self.sigCoolerErrorOccurred.emit()
+            self.sigCoolerErrorOccurred.emit(coolerError)
     
-    def overloadError(self):
+    def overloadError(self,overloadError):
         with self.hamamatsuLock:   
-            self.sigOverloadErrorOccurred.emit()
+            self.sigOverloadErrorOccurred.emit(overloadError)
+            
+    def peltierStatus(self,peltierStat):
+        with self.hamamatsuLock:
+            self.sigPeltierStatus.emit(peltierStat)
+            
+    def PMTPower(self,pmtP):
+        with self.hamamatsuLock:
+            self.sigPMTPower.emit(pmtP)
     
     def createTask(self, cmd, parentTask):
         return HamamatsuPMTTask(self, cmd, parentTask)
@@ -139,6 +157,8 @@ class HamamatsuPMTThread(Thread):
     sigPMTGainChang = QtCore.Signal(object)
     sigCoolerError = QtCore.Signal(object)
     sigOverloadError = QtCore.Signal(object)
+    sigPeltierStat = QtCore.Signal(object)
+    sigPMTPow = QtCore.Signal(object)
 
     def __init__(self, dev):
         Thread.__init__(self)
@@ -181,13 +201,14 @@ class HamamatsuPMTThread(Thread):
                 gain = self.dev.getPMTGain()
                 coolerError = self.dev.getCoolerStatus()
                 overloadError = self.dev.getOverloadStatus()
+                peltierStatus = self.dev.isPeltierOn()
+                pmtPower = self.dev.isPMTOn()
                     
                 self.sigPMTGainChang.emit(gain)
-                if overloadError:
-                    self.sigOverloadError.emit(gain)
-                    self.overloaded = True
-                if coolerError:
-                    self.sigCoolerError.emit(gain)
+                self.sigOverloadError.emit(coolerError)
+                self.sigCoolerError.emit(overloadError)
+                self.sigPeltierStat.emit(peltierStatus)
+                self.sigPMTPow.emit(pmtPower)
                 time.sleep(0.5)
             except:
                 debug.printExc("Error in Hamamatsu PMT communication thread:")

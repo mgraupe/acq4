@@ -53,6 +53,8 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.dev.sigPMTGainChanged.connect(self.PMTGainChanged)
         self.dev.sigCoolerErrorOccurred.connect(self.coolerError)
         self.dev.sigOverloadErrorOccurred.connect(self.overloadError)
+        self.dev.sigPeltierStatus.connect(self.peltierStatus)
+        self.dev.sigPMTPower.connect(self.pmtPower)
         
     def onOffToggled(self, b):
         if b:
@@ -70,12 +72,27 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         else:
             self.ui.PMTGainLabel.setText(siFormat(gain, suffix='V'))
             
-    def coolerError(self):
-        self.ui.CoolerStatusLabel.setText('Errror')
+    def coolerError(self,coolerError):
+        self.ui.CoolerStatusLabel.setText(coolerError)
     
-    def overloadError(self):
-        self.ui.CoolerStatusLabel.setText('True')
+    def overloadError(self,overloadError):
+        self.ui.CoolerStatusLabel.setText(overloadError)
     
+    def peltierStatus(self,peltierStat):
+        if peltierStat:
+            self.ui.peltierLabel.setText('PMT Peltier On')
+            self.ui.peltierLabel.setStyleSheet("QLabel {color: #C00}")
+        else:
+            self.ui.peltierLabel.setText('PMT Peltier Off')
+            self.ui.peltierLabel.setStyleSheet("QLabel {color: None}") 
+
+    def pmtPower(self,pmtP):
+        if pmtP:
+            self.ui.highVoltageLabel.setText('PMT high voltage On')
+            self.ui.highVoltageLabel.setStyleSheet("QLabel {color: #C00}")
+        else:
+            self.ui.highVoltageLabel.setText('PMT high voltage Off')
+            self.ui.highVoltageLabel.setStyleSheet("QLabel {color: None}") 
       
 
             
