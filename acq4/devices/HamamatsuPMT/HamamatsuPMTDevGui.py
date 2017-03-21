@@ -10,7 +10,7 @@ from acq4.pyqtgraph.functions import siFormat
 import time
 
 
-class HamamatsuDevGui(QtGui.QWidget):
+class HamamatsuPMTDevGui(QtGui.QWidget):
     
     def __init__(self, dev):
         
