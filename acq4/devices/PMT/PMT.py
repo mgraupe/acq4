@@ -9,8 +9,27 @@ class PMT(DAQGeneric, OptomechDevice):
         for k in ['parentDevice', 'transform']:
             if k in config:
                 self.omConf[k] = config.pop(k)
+        daqConfig = {}
+        if 'PeltierPower' in config:
+            daqConfig['PeltierPower'] = config['PeltierPower']
+            self.hasPeltierPower = True
+         if 'PeltierError' in config:
+            daqConfig['PeltierError'] = config['PeltierError']
+            self.hasPeltierError = True
+        if 'PMTPower' in config:
+            daqConfig['PMTPower'] = config['PMTPower']
+            self.hasPMTPower = True
+        if 'PMTOverloadError' in config:
+            daqConfig['PMTOverloadError'] = config['PMTOverloadError']
+            self.hasPMTOverloadError = True
+        if 'Vcont-ext' in config:
+            daqConfig['Vcont-ext'] = config['Vcont-ext']
+            self.hasVcontExt = True
+        if 'Vcont-mon' in config:
+            daqConfig['Vcont-mon'] = config['Vcont-mon']
+            self.hasVcontMon = True
         OptomechDevice.__init__(self, dm, config, name)
-        DAQGeneric.__init__(self, dm, config, name)
+        DAQGeneric.__init__(self, dm, daqConfig, name)
 
     def getFilterDevice(self):
         # return parent filter device or None
