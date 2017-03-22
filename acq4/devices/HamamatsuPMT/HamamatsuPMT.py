@@ -83,7 +83,7 @@ class HamamatsuPMT(PMT):
             self.setChanHolding('PeltierPower',0)
     
     def changePMTGain(self,newGain):
-        steps = int((newGain-self.currentSetGain)/self.gainStepSize)
+        steps = abs(int((newGain-self.currentSetGain)/self.gainStepSize))
         for ga in np.linspace(self.currentSetGain,newGain,steps):
             self.setChanHolding('VcontExt',ga)
             time.sleep(self.gainStepWait)
