@@ -42,8 +42,14 @@
          </item>
          <item row="1" column="1">
           <widget class="QLabel" name="PMTGainLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="text">
-            <string/>
+            <string>0</string>
            </property>
           </widget>
          </item>
@@ -56,6 +62,12 @@
          </item>
          <item row="2" column="3">
           <widget class="QLabel" name="OverloadStatusLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="text">
             <string>False</string>
            </property>
@@ -63,6 +75,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QLabel" name="CoolerStatusLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="text">
             <string>False</string>
            </property>

@@ -4,6 +4,7 @@ from acq4.devices.HamamatsuPMT.HamamatsuPMTDevGui import HamamatsuPMTDevGui
 from acq4.util.Mutex import Mutex
 from acq4.util.Thread import Thread
 import acq4.util.debug as debug
+import numpy as np
 import time
 
 class HamamatsuPMT(PMT):
@@ -16,7 +17,7 @@ class HamamatsuPMT(PMT):
     
     def __init__(self, dm, config, name):
         #self.port = config['port']-1  ## windows com ports start at COM1, pyserial ports start at 0
-        self.pmtGain = config.get('PMTgain',0.85)
+        self.setPMTGain = config.get('PMTgain',0.85)
         self.delay = 1. # in sec
         #self.alignmentPower = config.get('alignmentPower',0.2)
         
@@ -49,7 +50,7 @@ class HamamatsuPMT(PMT):
         #if self.hasExternalSwitch:
         #    if not self.getInternalShutter():
         #        self.setChanHolding('externalSwitch', 1)
-        
+        dm.declareInterface(name, ['HamamatsuPMT'], self)
         dm.sigAbortAll.connect(self.deactivatePMT)
         
     def isPMTOn(self):
@@ -77,14 +78,30 @@ class HamamatsuPMT(PMT):
             self.setChanHolding('PeltierPower',0)
     
     def activatePMT(self):
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
+        print 'turn PMT on'
         self.switchPeltierOn()
-        time.sleep(5.)
+        time.sleep(10.)
         self.switchPMTOn()
-        
+        for ga in np.linspace(0.,self.setPMTGain,1000):
+            self.setChanHolding('VcontExt',ga)
+            print ga
+            time.sleep(0.01)
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
+
     def deactivatePMT(self):
+        print 'turn PMT off'
+        for g in np.linspace(self.setPMTGain,0.,1000.):
+            self.setChanHolding('VcontExt',g)
+            print g
+            time.sleep(0.01)
         self.switchPMTOff()
-        time.sleep(5.)
+        time.sleep(1.)
         self.switchPeltierOff()
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
     
     def getPMTGain(self):
         with self.hamamatsuLock:    
