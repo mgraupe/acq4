@@ -4,6 +4,7 @@ from acq4.devices.HamamatsuPMT.HamamatsuPMTDevGui import HamamatsuPMTDevGui
 from acq4.util.Mutex import Mutex
 from acq4.util.Thread import Thread
 import acq4.util.debug as debug
+import numpy as np
 import time
 
 class HamamatsuPMT(PMT):
@@ -16,8 +17,11 @@ class HamamatsuPMT(PMT):
     
     def __init__(self, dm, config, name):
         #self.port = config['port']-1  ## windows com ports start at COM1, pyserial ports start at 0
-        self.pmtGain = config.get('PMTgain',0.85)
-        self.delay = 1. # in sec
+        self.optimalPMTGain = config.get('PMTgain',0.85)
+        self.delay = config.get('HighVoltageDelay',2.)
+        self.gainStepSize = 0.001
+        self.gainStepWait = 0.01
+        # in sec
         #self.alignmentPower = config.get('alignmentPower',0.2)
         
         self.hamamatsuLock = Mutex(QtCore.QMutex.Recursive)  ## access to self.attributes
@@ -41,6 +45,8 @@ class HamamatsuPMT(PMT):
                 
         self.hThread.start()
         
+        self.currentGain = self.getPMTGain()
+        self.currentSetGain = 0.
         
         
         #self.hasShutter = True
@@ -49,7 +55,7 @@ class HamamatsuPMT(PMT):
         #if self.hasExternalSwitch:
         #    if not self.getInternalShutter():
         #        self.setChanHolding('externalSwitch', 1)
-        
+        dm.declareInterface(name, ['HamamatsuPMT'], self)
         dm.sigAbortAll.connect(self.deactivatePMT)
         
     def isPMTOn(self):
@@ -76,15 +82,34 @@ class HamamatsuPMT(PMT):
         with self.hamamatsuLock:
             self.setChanHolding('PeltierPower',0)
     
+    def changePMTGain(self,newGain):
+        steps = int((newGain-self.currentSetGain)/self.gainStepSize)
+        for ga in np.linspace(self.currentSetGain,newGain,steps):
+            self.setChanHolding('VcontExt',ga)
+            time.sleep(self.gainStepWait)
+        print 'gain changed from ',self.currentSetGain, ' to ', newGain, ' in ', steps, ' steps'
+        self.currentSetGain = newGain
+            
+    
     def activatePMT(self):
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
+        print 'turn PMT on'
         self.switchPeltierOn()
-        time.sleep(5.)
+        time.sleep(self.delay)
         self.switchPMTOn()
-        
+        self.changePMTGain(self.optimalPMTGain)
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
+
     def deactivatePMT(self):
+        print 'turn PMT off'
+        self.changePMTGain(0.)
         self.switchPMTOff()
-        time.sleep(5.)
+        time.sleep(0.2)
         self.switchPeltierOff()
+        print 'Peltier:', self.isPeltierOn()
+        print 'High voltage:',self.isPMTOn()
     
     def getPMTGain(self):
         with self.hamamatsuLock:    

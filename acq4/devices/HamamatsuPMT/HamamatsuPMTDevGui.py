@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from acq4.Manager import getManager, logExc, logMsg
-from acq4.devices.HamamtsuPMT.hamamatsuPMTTemplate import Ui_HamamatsuForm
+from hamamatsuPMTTemplate import Ui_HamamatsuForm
 #from acq4.devices.Laser.devTemplate import Ui_Form
 #from acq4.devices.Laser.LaserDevGui import LaserDevGui
 #from maiTaiTemplate import Ui_MaiTaiStatusWidget
@@ -39,10 +39,13 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         #self._maitaiui.wavelengthSpin_2.setOpts(bounds=self.dev.getWavelengthRange())
         #self._maitaiui.currentWaveLengthLabel.setText(siFormat(startWL, suffix='m'))
         
+        self.ui.gainSpin.setOpts(suffix='V', siPrefix=True, dec=False, step=0.02)
+        self.ui.gainSpin.setValue(self.dev.optimalPMTGain)
+        self.ui.gainSpin.setOpts(bounds=(0,0.9))
         
         #self._maitaiui.wavelengthSpin_2.valueChanged.connect(self.wavelengthSpinChanged)
         
-        #self._maitaiui.turnOnOffBtn.toggled.connect(self.onOffToggled)
+        self.ui.turnOnOffBtn.toggled.connect(self.onOffToggled)
         #self._maitaiui.InternalShutterBtn.toggled.connect(self.internalShutterToggled)
         #self._maitaiui.ExternalShutterBtn.toggled.connect(self.externalShutterToggled)
         #self._maitaiui.externalSwitchBtn.toggled.connect(self.externalSwitchToggled)
@@ -55,14 +58,15 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.dev.sigOverloadErrorOccurred.connect(self.overloadError)
         self.dev.sigPeltierStatus.connect(self.peltierStatus)
         self.dev.sigPMTPower.connect(self.pmtPower)
+        self.ui.gainSpin.valueChanged.connect(self.gainSpinChanged)
         
     def onOffToggled(self, b):
         if b:
-            self.dev.switchPMTOn()
+            self.dev.activatePMT()
             self.ui.turnOnOffBtn.setText('Turn PMT Off')
             self.ui.turnOnOffBtn.setStyleSheet("QLabel {background-color: #C00}") 
         else:
-            self.dev.switchPMTOff()
+            self.dev.deactivatePMT()
             self.ui.turnOnOffBtn.setText('Turn PMT On')
             self.ui.turnOnOffBtn.setStyleSheet("QLabel {background-color: None}")
 
@@ -74,6 +78,9 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
             
     def coolerError(self,coolerError):
         self.ui.CoolerStatusLabel.setText(coolerError)
+    
+    def gainSpinChanged(self,value):
+        self.dev.changePMTGain(value)
     
     def overloadError(self,overloadError):
         self.ui.CoolerStatusLabel.setText(overloadError)

@@ -33,20 +33,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_16">
-           <property name="text">
-            <string>Current PMT Gain :</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QLabel" name="PMTGainLabel">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_15">
            <property name="text">
@@ -56,6 +42,12 @@
          </item>
          <item row="2" column="3">
           <widget class="QLabel" name="OverloadStatusLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="text">
             <string>False</string>
            </property>
@@ -63,6 +55,12 @@
          </item>
          <item row="2" column="1">
           <widget class="QLabel" name="CoolerStatusLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
            <property name="text">
             <string>False</string>
            </property>
@@ -98,6 +96,36 @@
             <string>PMT Peltier Off</string>
            </property>
           </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QLabel" name="PMTGainLabel">
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>0</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_16">
+           <property name="text">
+            <string>Current PMT Gain :</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Set PMT gain :</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="gainSpin"/>
          </item>
         </layout>
        </widget>
