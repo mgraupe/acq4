@@ -39,6 +39,9 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         #self._maitaiui.wavelengthSpin_2.setOpts(bounds=self.dev.getWavelengthRange())
         #self._maitaiui.currentWaveLengthLabel.setText(siFormat(startWL, suffix='m'))
         
+        self.ui.gainSpin.setOpts(suffix='V', siPrefix=True, dec=False, step=0.02)
+        self.ui.gainSpin.setValue(self.dev.optimalPMTGain)
+        self.ui.gainSpin.setOpts(bounds=(0,0.9))
         
         #self._maitaiui.wavelengthSpin_2.valueChanged.connect(self.wavelengthSpinChanged)
         
@@ -55,6 +58,7 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.dev.sigOverloadErrorOccurred.connect(self.overloadError)
         self.dev.sigPeltierStatus.connect(self.peltierStatus)
         self.dev.sigPMTPower.connect(self.pmtPower)
+        self.ui.gainSpin.valueChanged.connect(self.gainSpinChanged)
         
     def onOffToggled(self, b):
         if b:
@@ -74,6 +78,9 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
             
     def coolerError(self,coolerError):
         self.ui.CoolerStatusLabel.setText(coolerError)
+    
+    def gainSpinChanged(self,value):
+        self.dev.changePMTGain(value)
     
     def overloadError(self,overloadError):
         self.ui.CoolerStatusLabel.setText(overloadError)
