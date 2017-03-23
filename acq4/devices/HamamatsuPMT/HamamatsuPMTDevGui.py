@@ -96,22 +96,24 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
     def coolerError(self,coolerError):
         if coolerError:
             self.ui.CoolerStatusLabel.setText('True')
-            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {background-color: #C00}")
+            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {color: #C00}")
         else:
             self.ui.CoolerStatusLabel.setText('False')
-            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {background-color: None}")
+            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {color: None}")
         
     def gainSpinChanged(self,value):
+        self.dev.setPMTGain(value)
         if self.dev.isHVOn():
-            self.dev.changePMTGain(value)
+            self.dev.changePMTGain()
+            
     
     def overloadError(self,overloadError):
         if overloadError:
             self.ui.OverloadStatusLabel.setText('True')
-            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {background-color: #C00}")
+            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {color: #C00}")
         else:
             self.ui.OverloadStatusLabel.setText('False')
-            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {background-color: None")
+            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {color: None}")
     
     def peltierStatus(self,peltierStat):
         if peltierStat:
