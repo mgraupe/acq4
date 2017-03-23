@@ -17,7 +17,7 @@
    <item>
     <widget class="QGroupBox" name="maitaiControlGroup">
      <property name="title">
-      <string>Hamamatsui Control</string>
+      <string>Hamamatsu Control</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_12">
       <item row="1" column="0" colspan="3">

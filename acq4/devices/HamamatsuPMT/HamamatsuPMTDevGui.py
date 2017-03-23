@@ -20,34 +20,17 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.ui.setupUi(self)
         
         if self.dev.isPeltierOn():
-            self.onOffToggled(True)
+            self.PeltierOnOffToggled(True)
         else:
             self.ui.turnHVOnOffBtn.setEnabled(False)
         
         if self.dev.isHVOn():
-            self.turnPeltierOnOffBtn(True)
-            self.turnHVOnOffBtn(True)
+            self.PeltierOnOffToggled(True)
+            self.HVOnOffToggled(True)
             
             
-            #self.ui.turnOnOffBtn.setChecked(True)
-            #if self.dev.getInternalShutter():
-            #    self.internalShutterToggled(True)
-            #    self._maitaiui.InternalShutterBtn.setChecked(True)
-            #self._maitaiui.InternalShutterBtn.setEnabled(True)
-        #else:
-        #    self._maitaiui.InternalShutterBtn.setEnabled(False)
-                
-        #self.ui.MaiTaiGroup.hide()
-        #self.ui.turnOnOffBtn.hide()
-        
-        #startWL = self.dev.getWavelength()
-        #self._maitaiui.wavelengthSpin_2.setOpts(suffix='m', siPrefix=True, dec=False, step=5e-9)
-        #self._maitaiui.wavelengthSpin_2.setValue(startWL)
-        #self._maitaiui.wavelengthSpin_2.setOpts(bounds=self.dev.getWavelengthRange())
-        #self._maitaiui.currentWaveLengthLabel.setText(siFormat(startWL, suffix='m'))
-        
         self.ui.gainSpin.setOpts(suffix='V', siPrefix=True, dec=False, step=0.02)
-        self.ui.gainSpin.setValue(self.dev.optimalPMTGain)
+        self.ui.gainSpin.setValue(self.dev.currentSetGain)
         self.ui.gainSpin.setOpts(bounds=(0,0.9))
         
         self.ui.turnPeltierOnOffBtn.toggled.connect(self.PeltierOnOffToggled)
@@ -69,6 +52,7 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         else:
             if self.dev.isHVOn:
                 self.HVOnOffToggled(False)
+                self.ui.turnHVOnOffBtn.setChecked(False)
             self.ui.turnHVOnOffBtn.setEnabled(False)    
             self.dev.deactivatePeltier()
             self.ui.turnPeltierOnOffBtn.setText('Turn Peltier On')
