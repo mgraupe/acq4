@@ -19,19 +19,14 @@ class HamamatsuPMT(PMT):
         self.currentSetGain = config.get('PMTgain',0.85)
         self.delay = config.get('HighVoltageDelay',0.5)
         self.gainStepSize = 0.001
-        self.gainStepWait = 0.01
-        # in sec
-        #self.alignmentPower = config.get('alignmentPower',0.2)
+        self.gainStepWait = 0.01 # in sec
         
         self.hamamatsuLock = Mutex(QtCore.QMutex.Recursive)  ## access to self.attributes
-        self.maiTaiPower = 0.
-        self.maiTaiWavelength = 0
-        self.maiTaiHumidity = 0.
-        self.maiTaiPumpPower = 0.
-        self.maiTaiPulsing = False
-        self.maiTaiP2Optimization = False
-        self.maiTaiMode = None
-        self.maiTaiHistory = None
+        
+        if self.isHVOn():
+            self.currentGain = self.getPMTGain()
+        else:
+            self.currentGain = 0.
         
         PMT.__init__(self, dm, config, name)
         
@@ -41,11 +36,7 @@ class HamamatsuPMT(PMT):
         self.hThread.sigOverloadError.connect(self.overloadError)
         self.hThread.sigPeltierStat.connect(self.peltierStatus)
         self.hThread.sigPMTPow.connect(self.PMTPower)
-                
         self.hThread.start()
-        
-        self.currentGain = 0.
-        
         
         dm.declareInterface(name, ['HamamatsuPMT'], self)
         dm.sigAbortAll.connect(self.deactivatePMT)
@@ -77,17 +68,17 @@ class HamamatsuPMT(PMT):
     def setPMTGain(self,value):
         self.currentSetGain = value
     
-    def changePMTGain(self,nG=None):
-        if nG:
-            newGain = nG
+    def changePMTGain(self,newGain=None):
+        if newGain == None:
+            nG = self.currentSetGain
         else:
-            newGain = self.currentSetGain
-        steps = abs(int((newGain-self.currentGain)/self.gainStepSize))
-        for ga in np.linspace(self.currentGain,newGain,steps):
+            nG = newGain
+        steps = abs(int((nG-self.currentGain)/self.gainStepSize))
+        for ga in np.linspace(self.currentGain,nG,steps):
             self.setChanHolding('VcontExt',ga)
             time.sleep(self.gainStepWait)
-        print 'gain changed from ',self.currentGain, ' to ', newGain, ' in ', steps, ' steps'
-        self.currentGain = newGain
+        print 'gain changed from ',self.currentGain, ' to ', nG, ' in ', steps, ' steps'
+        self.currentGain = nG
     
     def deactivatePMT(self):
         if isHVOn():
