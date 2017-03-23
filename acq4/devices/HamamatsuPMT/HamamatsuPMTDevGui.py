@@ -16,12 +16,19 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         
         QtGui.QWidget.__init__(self)
         self.dev = dev
-        #self.dev.devGui = self  ## make this gui accessible from LaserDevice, so device can change power values. NO, BAD FORM (device is not allowed to talk to guis, it can only send signals)
         self.ui = Ui_HamamatsuForm()
         self.ui.setupUi(self)
         
-        if self.dev.isPMTOn():
+        if self.dev.isPeltierOn():
             self.onOffToggled(True)
+        else:
+            self.ui.turnHVOnOffBtn.setEnabled(False)
+        
+        if self.dev.isHVOn():
+            self.turnPeltierOnOffBtn(True)
+            self.turnHVOnOffBtn(True)
+            
+            
             #self.ui.turnOnOffBtn.setChecked(True)
             #if self.dev.getInternalShutter():
             #    self.internalShutterToggled(True)
@@ -43,16 +50,9 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.ui.gainSpin.setValue(self.dev.optimalPMTGain)
         self.ui.gainSpin.setOpts(bounds=(0,0.9))
         
-        #self._maitaiui.wavelengthSpin_2.valueChanged.connect(self.wavelengthSpinChanged)
+        self.ui.turnPeltierOnOffBtn.toggled.connect(self.PeltierOnOffToggled)
+        self.ui.turnHVOnOffBtn.toggled.connect(self.HVOnOffToggled)
         
-        self.ui.turnOnOffBtn.toggled.connect(self.onOffToggled)
-        #self._maitaiui.InternalShutterBtn.toggled.connect(self.internalShutterToggled)
-        #self._maitaiui.ExternalShutterBtn.toggled.connect(self.externalShutterToggled)
-        #self._maitaiui.externalSwitchBtn.toggled.connect(self.externalSwitchToggled)
-        #self._maitaiui.linkLaserExtSwitchCheckBox.toggled.connect(self.linkLaserExtSwitch)
-        #self._maitaiui.alignmentModeBtn.toggled.connect(self.alignmentModeToggled)
-
-
         self.dev.sigPMTGainChanged.connect(self.PMTGainChanged)
         self.dev.sigCoolerErrorOccurred.connect(self.coolerError)
         self.dev.sigOverloadErrorOccurred.connect(self.overloadError)
@@ -60,30 +60,58 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.dev.sigPMTPower.connect(self.pmtPower)
         self.ui.gainSpin.valueChanged.connect(self.gainSpinChanged)
         
-    def onOffToggled(self, b):
+    def PeltierOnOffToggled(self, b):
         if b:
-            self.dev.activatePMT()
-            self.ui.turnOnOffBtn.setText('Turn PMT Off')
-            self.ui.turnOnOffBtn.setStyleSheet("QLabel {background-color: #C00}") 
+            self.dev.activatePeltier()
+            self.ui.turnPeltierOnOffBtn.setText('Turn Peltier Off')
+            self.ui.turnPeltierOnOffBtn.setStyleSheet("QLabel {background-color: #C00}") 
+            self.ui.turnHVOnOffBtn.setEnabled(True)
         else:
-            self.dev.deactivatePMT()
-            self.ui.turnOnOffBtn.setText('Turn PMT On')
-            self.ui.turnOnOffBtn.setStyleSheet("QLabel {background-color: None}")
-
+            if self.dev.isHVOn:
+                self.HVOnOffToggled(False)
+            self.ui.turnHVOnOffBtn.setEnabled(False)    
+            self.dev.deactivatePeltier()
+            self.ui.turnPeltierOnOffBtn.setText('Turn Peltier On')
+            self.ui.turnPeltierOnOffBtn.setStyleSheet("QLabel {background-color: None}")
+    
+    def HVOnOffToggled(self, b):
+        if b:
+            self.dev.activateHV()
+            self.ui.turnHVOnOffBtn.setText('Turn High Voltage Off')
+            self.ui.turnHVOnOffBtn.setStyleSheet("QLabel {background-color: #C00}") 
+        else:
+            self.dev.deactivateHV()
+            self.ui.turnHVOnOffBtn.setText('Turn High Voltage On')
+            self.ui.turnHVOnOffBtn.setStyleSheet("QLabel {background-color: None}")
+        
     def PMTGainChanged(self,gain):
-        if gain is None:
-            self.ui.PMTGainLabel.setText("?")
+        if self.dev.isHVOn():
+            if gain is None:
+                self.ui.PMTGainLabel.setText("?")
+            else:
+                self.ui.PMTGainLabel.setText(siFormat(gain, suffix='V'))
         else:
-            self.ui.PMTGainLabel.setText(siFormat(gain, suffix='V'))
+            self.ui.PMTGainLabel.setText('-')
             
     def coolerError(self,coolerError):
-        self.ui.CoolerStatusLabel.setText(coolerError)
-    
+        if coolerError:
+            self.ui.CoolerStatusLabel.setText('True')
+            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {background-color: #C00}")
+        else:
+            self.ui.CoolerStatusLabel.setText('False')
+            self.ui.CoolerStatusLabel.setStyleSheet("QLabel {background-color: None}")
+        
     def gainSpinChanged(self,value):
-        self.dev.changePMTGain(value)
+        if self.dev.isHVOn():
+            self.dev.changePMTGain(value)
     
     def overloadError(self,overloadError):
-        self.ui.CoolerStatusLabel.setText(overloadError)
+        if overloadError:
+            self.ui.OverloadStatusLabel.setText('True')
+            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {background-color: #C00}")
+        else:
+            self.ui.OverloadStatusLabel.setText('False')
+            self.ui.OverloadStatusLabel.setStyleSheet("QLabel {background-color: None")
     
     def peltierStatus(self,peltierStat):
         if peltierStat:

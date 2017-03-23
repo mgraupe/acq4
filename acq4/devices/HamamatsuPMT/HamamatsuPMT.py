@@ -16,9 +16,8 @@ class HamamatsuPMT(PMT):
     sigPMTPower = QtCore.Signal(object)
     
     def __init__(self, dm, config, name):
-        #self.port = config['port']-1  ## windows com ports start at COM1, pyserial ports start at 0
         self.optimalPMTGain = config.get('PMTgain',0.85)
-        self.delay = config.get('HighVoltageDelay',2.)
+        self.delay = config.get('HighVoltageDelay',0.5)
         self.gainStepSize = 0.001
         self.gainStepWait = 0.01
         # in sec
@@ -49,24 +48,18 @@ class HamamatsuPMT(PMT):
         self.currentSetGain = 0.
         
         
-        #self.hasShutter = True
-        #self.hasTunableWavelength = True
-        
-        #if self.hasExternalSwitch:
-        #    if not self.getInternalShutter():
-        #        self.setChanHolding('externalSwitch', 1)
         dm.declareInterface(name, ['HamamatsuPMT'], self)
         dm.sigAbortAll.connect(self.deactivatePMT)
         
-    def isPMTOn(self):
+    def isHVOn(self):
        with self.hamamatsuLock:
            return self.getChanHolding('PMTPower')
        
-    def switchPMTOn(self):
+    def switchHVOn(self):
         with self.hamamatsuLock:
             self.setChanHolding('PMTPower',1)
 
-    def switchPMTOff(self):
+    def switchHVOff(self):
         with self.hamamatsuLock:
             self.setChanHolding('PMTPower',0)
     
@@ -91,24 +84,29 @@ class HamamatsuPMT(PMT):
         self.currentSetGain = newGain
             
     
-    def activatePMT(self):
+    def activatePeltier(self):
         print 'Peltier:', self.isPeltierOn()
-        print 'High voltage:',self.isPMTOn()
-        print 'turn PMT on'
+        print 'turn Peltier on'
         self.switchPeltierOn()
-        time.sleep(self.delay)
-        self.switchPMTOn()
-        self.changePMTGain(self.optimalPMTGain)
         print 'Peltier:', self.isPeltierOn()
-        print 'High voltage:',self.isPMTOn()
-
-    def deactivatePMT(self):
-        print 'turn PMT off'
-        self.changePMTGain(0.)
-        self.switchPMTOff()
-        time.sleep(0.2)
+        
+    def deactivatePeltier(self):
+        print 'Peltier:', self.isPeltierOn()
+        print 'turn Peltier off'
         self.switchPeltierOff()
         print 'Peltier:', self.isPeltierOn()
+        
+    def activateHV(self):
+        print 'High Voltage:', self.isHVOn()
+        print 'turn High Voltage on'
+        self.switchPMTOn()
+        self.changePMTGain(self.optimalPMTGain)
+        print 'High voltage:',self.isHVOn()
+        
+    def deactivateHV(self):
+        print 'turn High Voltage off'
+        self.changePMTGain(0.)
+        self.switchHVOff()
         print 'High voltage:',self.isPMTOn()
     
     def getPMTGain(self):
@@ -119,18 +117,12 @@ class HamamatsuPMT(PMT):
     def getCoolerStatus(self):
         with self.hamamatsuLock:   
             coolerError = self.getChannelValue('PeltierError')
-            if coolerError:
-                return 'True'
-            else:
-                return 'False'
+            return coolerError
         
     def getOverloadStatus(self):
         with self.hamamatsuLock:   
             overloadError = self.getChannelValue('PMTOverloadError')
-            if overloadError:
-                return 'True'
-            else:
-                return 'False'
+            return overloadError
         
     def gainChanged(self,gain):
         with self.hamamatsuLock:   
@@ -161,22 +153,7 @@ class HamamatsuPMT(PMT):
     
 class HamamatsuPMTTask(DeviceTask):
     pass
-    # This is disabled--internal shutter in coherent laser should NOT be used by ACQ4; use a separate shutter.
-    #
-    # def start(self):
-    #     # self.shutterOpened = self.dev.getShutter()
-    #     # if not self.shutterOpened:
-    #     #     self.dev.openShutter()
-    #     #     time.sleep(2.0)  ## opening the shutter causes momentary power drop; give laser time to recover
-    #     #                      ## Note: It is recommended to keep the laser's shutter open rather than
-    #     #                      ## rely on this to open it for you.
-    #     LaserTask.start(self)
-        
-    # def stop(self, abort):
-    #     if not self.shutterOpened:
-    #         self.dev.closeShutter()
-    #     LaserTask.stop(self, abort)
-        
+    
 class HamamatsuPMTThread(Thread):
 
     sigPMTGainChang = QtCore.Signal(object)
@@ -189,8 +166,6 @@ class HamamatsuPMTThread(Thread):
         Thread.__init__(self)
         self.lock = Mutex(QtCore.QMutex.Recursive)
         self.dev = dev
-        #self.driver = driver
-        #self.driverLock = lock
         self.cmds = {}
         self.overloaded = False
         
@@ -230,8 +205,8 @@ class HamamatsuPMTThread(Thread):
                 pmtPower = self.dev.isPMTOn()
                     
                 self.sigPMTGainChang.emit(gain)
-                self.sigOverloadError.emit(coolerError)
-                self.sigCoolerError.emit(overloadError)
+                self.sigCoolerError.emit(coolerError)
+                self.sigOverloadError.emit(overloadError)
                 self.sigPeltierStat.emit(peltierStatus)
                 self.sigPMTPow.emit(pmtPower)
                 time.sleep(0.5)
