@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from acq4.devices.PMT import *
+from acq4.devices.DAQGeneric import *
 from acq4.devices.HamamatsuPMT.HamamatsuPMTDevGui import HamamatsuPMTDevGui
 from acq4.util.Mutex import Mutex
 from acq4.util.Thread import Thread
@@ -152,7 +153,7 @@ class HamamatsuPMT(PMT):
     def deviceInterface(self, win):
         return HamamatsuPMTDevGui(self)
     
-class HamamatsuPMTTask(DeviceTask):
+class HamamatsuPMTTask(DAQGenericTask):
     pass
     
 class HamamatsuPMTThread(Thread):

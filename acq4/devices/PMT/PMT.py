@@ -10,6 +10,8 @@ class PMT(DAQGeneric, OptomechDevice):
             if k in config:
                 self.omConf[k] = config.pop(k)
         daqConfig = {}
+        if 'Input' in config['channels']:
+            daqConfig['Input'] = config['channels']['Input']
         if 'PeltierPower' in config['channels']:
             daqConfig['PeltierPower'] = config['channels']['PeltierPower']
             self.hasPeltierPower = True
