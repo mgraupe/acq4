@@ -9,6 +9,49 @@ import numpy as np
 import time
 
 class HamamatsuPMT(PMT):
+    """
+    Control of the Hamamtsu PMT (H7422) through the M9012 temperature control and power supply unit. Cooling and high voltage settings can be controlled throug the I/O connecters on the card which in turn are linked to the DAQ input/output channels. The device interface allows to arm the PMT and control the gain voltage. Furthermore, resetting is possible in case cooling and overload errors occur.     
+    
+    Configuration example:
+    
+    # Hamamatsu Photomultiplier device
+    PMT:
+        driver: 'HamamatsuPMT'
+        parentDevice: 'FilterWheel'
+        PMTgain : 0.85 # optimal gain in volts
+        channels:
+            Input:
+                device: 'DAQ'
+                channel: '/Dev2/ctr0' #'/Dev1/ai0'
+                #mode: 'PseudoDiff'
+                type: 'ci' #'ai'
+            PeltierPower:
+                device: 'DAQ'
+                channel: '/Dev2/port1/line1' 
+                type: 'do' #'ai'
+            PeltierError:
+                device: 'DAQ'
+                channel: '/Dev2/port1/line2' 
+                type: 'di' #'ai'
+            PMTPower:
+                device: 'DAQ'
+                channel: '/Dev2/port1/line3' 
+                type: 'do' #'ai'
+            PMTOverloadError:
+                device: 'DAQ'
+                channel: '/Dev2/port1/line4' 
+                type: 'di' #'ai'
+            VcontExt:
+                device: 'DAQ'
+                channel: '/Dev2/ao3' 
+                type: 'ao' #'ai'
+            VcontMon:
+                device: 'DAQ'
+                channel: '/Dev2/ai9' 
+                mode: 'rse'
+                type: 'ai' #'ai'
+
+    """
 
     sigPMTGainChanged = QtCore.Signal(object)
     sigCoolerErrorOccurred = QtCore.Signal(object)
@@ -18,7 +61,6 @@ class HamamatsuPMT(PMT):
     
     def __init__(self, dm, config, name):
         self.currentSetGain = config.get('PMTgain',0.85)
-        self.delay = config.get('HighVoltageDelay',0.5)
         self.gainStepSize = 0.001
         self.gainStepWait = 0.01 # in sec
         
@@ -171,35 +213,10 @@ class HamamatsuPMTThread(Thread):
         self.cmds = {}
         self.overloaded = False
         
-    #def setWavelength(self, wl):
-    #    pass
-        
-    #def setShutter(self, opened):
-    #    wait = QtCore.QWaitCondition()
-    #    cmd = ['setShutter', opened]
-    #    with self.lock:
-    #        self.cmds.append(cmd)
-    #def adjustPumpPower(self,currentPower):
-    #    """ keeps laser output power between alignmentPower value and  alignmentPower + 25%"""
-    #    lastCommandedPP = self.driver.getLastCommandedPumpLaserPower()
-    #    if self.dev.alignmentPower*1.25 < currentPower:
-    #        newPP = round(lastCommandedPP*0.98,2) # decrease pump power by 2 % 
-    #        self.driver.setPumpLaserPower(newPP)
-    #    elif self.dev.alignmentPower > currentPower:
-    #        newPP = round(lastCommandedPP*1.01,2) # increase pump power by 1 % 
-    #        self.driver.setPumpLaserPower(newPP)
-    #    #newCommandedPP = self.driver.getLastCommandedPumpLaserPower()
-    #    #print 'pump laser power - before : new : after , ', lastCommandedPP, newPP, newCommandedPP
-    #    #print 'laser output power : ', currentPower
-        
-        
     def run(self):
         self.stopThread = False
-        #with self.driverLock:
-        #    self.sigWLChanged.emit(self.driver.getWavelength()*1e-9)
         while True:
             try:
-                #with self.driverLock:
                 gain = self.dev.getPMTGain()
                 coolerError = self.dev.getCoolerStatus()
                 overloadError = self.dev.getOverloadStatus()
@@ -222,7 +239,6 @@ class HamamatsuPMTThread(Thread):
             self.lock.unlock()
             time.sleep(0.02)
 
-        #self.driver.close()
     
     def stop(self, block=False):
         with self.lock:
