@@ -21,14 +21,13 @@ class HamamatsuPMT(PMT):
         self.gainStepSize = 0.001
         self.gainStepWait = 0.01 # in sec
         
+        PMT.__init__(self, dm, config, name)
         self.hamamatsuLock = Mutex(QtCore.QMutex.Recursive)  ## access to self.attributes
         
         if self.isHVOn():
             self.currentGain = self.getPMTGain()
         else:
             self.currentGain = 0.
-        
-        PMT.__init__(self, dm, config, name)
         
         self.hThread = HamamatsuPMTThread(self)
         self.hThread.sigPMTGainChang.connect(self.gainChanged)
