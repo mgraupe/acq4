@@ -120,7 +120,7 @@
             </font>
            </property>
            <property name="text">
-            <string>PMT high voltage Off</string>
+            <string>PMT High voltage Off</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -160,6 +160,9 @@
        <widget class="QPushButton" name="turnHVOnOffBtn">
         <property name="text">
          <string>Turn High Voltage On</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
