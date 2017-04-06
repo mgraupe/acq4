@@ -251,6 +251,7 @@ class RegionCtrl(pg.ROI):
         self.addScaleHandle([1,0], [0,1])
         self.setZValue(1200)
 
+
 class TileControl(pg.ROI):
     """
     Create an ROI for the Tile Regions. Note that the color is RED, 
@@ -260,7 +261,6 @@ class TileControl(pg.ROI):
         self.addScaleHandle([0,0], [1,1])
         self.addScaleHandle([1,1], [0,0])
         self.setZValue(1400)
-    
 
 
 class Imager(Module):
@@ -318,6 +318,7 @@ class Imager(Module):
             ws = QtCore.QByteArray.fromPercentEncoding(uiState['window'])
             self.win.restoreState(ws)
         
+
         # TODO: resurrect this for situations when the camera module can't be used
         # self.view = ImagerView()
         # self.w1.addWidget(self.view)   # add the view to the right of w1     
@@ -334,7 +335,7 @@ class Imager(Module):
         
         self.objectiveROImap = {} # this is a dict that we will populate with the name
         # of the objective and the associated ROI object .
-        # That way, each objective has a scan region appopriate for it's magnification.
+        # That way, each objective has a scan region appopriate for its magnification.
 
         # we assume that you are not going to change the current camera or scope while running
         # ... not just yet anyway.
@@ -348,8 +349,7 @@ class Imager(Module):
             self.cameraModule = self.manager.getModule(config['cameraModule'])
         self.laserDev = self.manager.getDevice(config['laser'])
         self.scannerDev = self.manager.getDevice(config['scanner'])
-        
-        
+
         self.imagingThread = ImagingThread(self.laserDev, self.scannerDev)
         self.imagingThread.sigNewFrame.connect(self.newFrame)
         self.imagingThread.sigVideoStopped.connect(self.videoStopped)
@@ -406,11 +406,6 @@ class Imager(Module):
         for mode in VideoModes:
             self.imagingCtrl.addVideoButton(mode)
 
-        # Connect other UI controls
-        # self.ui.run_button.clicked.connect(self.PMT_Run)
-        # self.ui.stop_button.clicked.connect(self.PMT_Stop)
-        # self.ui.set_TilesButton.clicked.connect(self.setTilesROI)
-        
         #self.ui.cameraSnapBtn.clicked.connect(self.cameraSnap)
         self.ui.restoreROI.clicked.connect(self.restoreROI)
         self.ui.saveROI.clicked.connect(self.saveROI)
@@ -455,32 +450,6 @@ class Imager(Module):
                     ]),
                 dict(name='Camera Module', type='interface', interfaceTypes=['cameraModule']),
             ]),
-            # dict(name='Scope Device', type='interface', interfaceTypes=['microscope']),
-            # dict(name='Scanner Device', type='interface', interfaceTypes=['scanner']),
-            # dict(name='Laser Device', type='interface', interfaceTypes=['laser']),
-            # dict(name="Tiles", type="bool", value=False, children=[
-            #     dict(name='Stage', type='interface', interfaceTypes='stage'),
-            #     dict(name="X0", type="float", value=-100., suffix='um', dec=True, minStep=1, step=1, limits=[-2.5e3,2.5e3], siPrefix=True),
-            #     dict(name="X1", type="float", value=100., suffix='um', dec=True, minStep=1, step=1, limits=[-2.5e3,2.5e3], siPrefix=True),
-            #     dict(name="Y0", type="float", value=-100., suffix='um', dec=True, minStep=1, step=1, limits=[-2.5e3,2.5e3], siPrefix=True),
-            #     dict(name="Y1", type="float", value=100., suffix='um', dec=True, minStep=1, step=1, limits=[-2.5e3,2.5e3], siPrefix=True),
-            #     dict(name="StepSize", type="float", value=100, suffix='um', dec=True, minStep=1e-5, step=0.5, limits=[1e-5,1e3], siPrefix=True),
-                
-            # ]),
-            # dict(name="Z-Stack", type="bool", value=False, children=[
-            #     dict(name='Stage', type='interface', interfaceTypes='stage'),
-            #     dict(name="Step Size", type="float", value=5e-6, suffix='m', dec=True, minStep=1e-7, step=0.5, limits=[1e-9,1], siPrefix=True),
-            #     dict(name="Steps", type='int', value=10, step=1, limits=[1,None]),
-            #     dict(name="Depth", type="float", value=0, readonly=True, suffix='m', siPrefix=True)
-            # ]),
-            # dict(name="Timed", type="bool", value=False, children=[
-            #     dict(name="Interval", type="float", value=5.0, suffix='s', dec=True, minStep=0.1, step=0.5, limits=[0.1,30], siPrefix=True),
-            #     dict(name="N Intervals", type='int', value=10, step=1, limits=[1,None]),
-            #     dict(name="Duration", type="float", value=0, readonly=True, suffix='s', siPrefix = True),
-            #     dict(name="Current Frame", type='int', value = 0, readonly=True),
-            # ]),
-            # dict(name='Show PMT V', type='bool', value=False),
-            # dict(name='Show Mirror V', type='bool', value=False),
         ])
         self.tree.setParameters(self.param, showTop=False)
 
@@ -496,6 +465,7 @@ class Imager(Module):
         self.manager.sigAbortAll.connect(self.abortTask)
         self.cameraModule.window().centerView()
         self.updateImagingProtocol()
+        #<<<<<<< HEAD
         
         state = self.currentRoi.getState()
         self.defaultROIsize = state['size']
@@ -517,6 +487,11 @@ class Imager(Module):
         geom = self.win.geometry()
         uiState = {'window': str(self.win.saveState().toPercentEncoding()), 'geometry': [geom.x(), geom.y(), geom.width(), geom.height()]}
         Manager.getManager().writeConfigFile(uiState, self.stateFile)
+        #=======
+
+    def quit(self):
+        self.abortTask()
+        #>>>>>>> luke/camera-tracking
         self.camModInterface.quit()
         self.imagingCtrl.quit()
         self.imageItem = None
@@ -577,6 +552,7 @@ class Imager(Module):
         finally:
             self.currentRoi.sigRegionChangeFinished.connect(self.roiChanged)
         self.setScanPosFromRoi()
+        self.camModInterface.deviceTransformChanged(pg.SRTTransform3D(globalTr).as2D())
         if self.imagingThread.isRunning():
             self.updateImagingProtocol()
 
@@ -618,7 +594,6 @@ class Imager(Module):
         return roi
     
     def restoreROI(self):
-        
         if self.storedROI is not None:
             (width, height, x, y) = self.storedROI
             self.currentRoi.setSize([width, height])
@@ -698,6 +673,7 @@ class Imager(Module):
         self.ui.zoomSingleBox.setValue(0)
         self.ui.zoomTenthBox.setValue(0)
         self.roiChanged()
+        #<<<<<<< HEAD
         self.cameraModule.window().centerView()
         
     def zoomRoi(self):
@@ -766,7 +742,7 @@ class Imager(Module):
     #         tr.map(pt2),
     #         ]
 
-        
+
     def updateParams(self, root=None, changes=()):
         """Parameters have changed; update any dependent parameters and the scan program.
         """
@@ -882,6 +858,9 @@ class Imager(Module):
 
     def stopVideoClicked(self):
         self.imagingThread.stopVideo()
+
+    def isRunning(self):
+        return self.imagingThread.isRunning()
 
     def videoStopped(self):
         self.imagingCtrl.acquisitionStopped()
@@ -1008,6 +987,7 @@ class Imager(Module):
         ## New image is displayed; update image transform
         self.imageItem.setTransform(frame.globalTransform().as2D())
 
+        #<<<<<<< HEAD
     def getBoundary(self):
         """
         Return bounding rect of this imaging device in global coordinates
@@ -1166,6 +1146,7 @@ class Imager(Module):
     #     self.stopFlag = True
 
 
+
 class ImagerCamModInterface(CameraModuleInterface):
     """For plugging in the 2p imager system to the camera module.
     """
@@ -1197,6 +1178,9 @@ class ImagerCamModInterface(CameraModuleInterface):
         Return bounding rect of this imaging device in global coordinates
         """
         return self.imager.getBoundary().boundingRect()
+
+    def isRunning(self):
+        return self.imager.isRunning()
 
 
 class ImagingFrame(imaging.Frame):
@@ -1360,10 +1344,3 @@ class ImagingThread(Thread):
 
         frame = ImagingFrame(pmtData, rectSystem.copy(), info)
         self.sigNewFrame.emit(frame)
-
-
-
-
-
-
-

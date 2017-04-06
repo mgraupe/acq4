@@ -27,12 +27,12 @@ class CameraInterface(CameraModuleInterface):
     """
     
     sigNewFrame = QtCore.Signal(object, object)  # self, frame
+    sigStarted = QtCore.Signal(object)
+    sigStopped = QtCore.Signal(object)
     
     def __init__(self, camera, module):
         CameraModuleInterface.__init__(self, camera, module)
 
-        self.module = module
-        self.view = module.getView()
         self.hasQuit = False
         self.boundaryItems = {}
 
@@ -82,8 +82,6 @@ class CameraInterface(CameraModuleInterface):
         self.openCamera()
 
         ## Initialize values
-        self.lastCameraPosition = Point(self.camSize[0]*0.5, self.camSize[1]*0.5)
-        self.lastCameraScale = Point(1.0, 1.0)
         self.scopeCenter = [self.camSize[0]*0.5, self.camSize[1]*0.5]
         self.cameraScale = [1, 1]
 
@@ -95,7 +93,7 @@ class CameraInterface(CameraModuleInterface):
 
         ## Set up microscope objective borders
         self.borders = CameraItemGroup(self.cam)
-        self.module.addItem(self.borders)
+        self.view.addItem(self.borders)
         self.borders.setZValue(-1)
         
         self.cam.sigGlobalTransformChanged.connect(self.globalTransformChanged)
@@ -136,7 +134,6 @@ class CameraInterface(CameraModuleInterface):
     def openCamera(self, ind=0):
         try:
             self.bitDepth = self.cam.getParam('bitDepth')
-            #self.setLevelRange()
             self.camSize = self.cam.getParam('sensorSize')
             self.showMessage("Opened camera %s" % self.cam, 5000)
             self.scope = self.cam.getScopeDevice()
@@ -149,12 +146,10 @@ class CameraInterface(CameraModuleInterface):
             bins.reverse()
             for b in bins:
                 self.ui.binningCombo.addItem(str(b))
-
-
         except:
             self.showMessage("Error opening camera")
             raise
-    
+
     def globalTransformChanged(self, emitter=None, changedDev=None, transform=None):
         ## scope has moved; update viewport and camera outlines.
         ## This is only used when the camera is not running--
@@ -162,7 +157,7 @@ class CameraInterface(CameraModuleInterface):
         ## ensure that the image remains stationary on screen.
         if not self.cam.isRunning():
             tr = pg.SRTTransform(self.cam.globalTransform())
-            self.updateTransform(tr)
+            self.deviceTransformChanged(tr)
 
     def imageUpdated(self, frame):
         ## New image is displayed; update image transform
@@ -170,27 +165,15 @@ class CameraInterface(CameraModuleInterface):
         
         ## Update viewport to correct for scope movement/scaling
         tr = pg.SRTTransform(frame.deviceTransform())
-        self.updateTransform(tr)
+        if self._trackView:
+            self.deviceTransformChanged(tr)
 
         self.imageItemGroup.setTransform(tr)
             
-    def updateTransform(self, tr):
-        ## update view for new transform such that sensor bounds remain stationary on screen.
-        pos = tr.getTranslation()
-        
-        scale = tr.getScale()
-        if scale != self.lastCameraScale:
-            anchor = self.view.mapViewToDevice(self.lastCameraPosition)
-            self.view.scaleBy(scale / self.lastCameraScale)
-            pg.QtGui.QApplication.processEvents()
-            anchor2 = self.view.mapDeviceToView(anchor)
-            diff = pos - anchor2
-            self.lastCameraScale = scale
-        else:
-            diff = pos - self.lastCameraPosition
-            
-        self.view.translateBy(diff)
-        self.lastCameraPosition = pos
+    def deviceTransformChanged(self, tr):
+        # handle view tracking first
+        CameraModuleInterface.deviceTransformChanged(self, tr)
+        # move camera-related graphics items to follow camera
         self.cameraItemGroup.setTransform(tr)
 
     def regionWidgetChanged(self, *args):
@@ -226,9 +209,14 @@ class CameraInterface(CameraModuleInterface):
 
     def cameraStopped(self):
         self.imagingCtrl.acquisitionStopped()
+        self.sigStopped.emit(self)
 
     def cameraStarted(self):
         self.imagingCtrl.acquisitionStarted()
+        self.sigStarted.emit(self)
+
+    def isRunning(self):
+        return self.cam.isRunning()
 
     def binningComboChanged(self, args):
         self.setBinning(*args)
@@ -255,12 +243,6 @@ class CameraInterface(CameraModuleInterface):
         self.cam.setParam('exposure', self.exposure, autoRestart=autoRestart)
 
     def updateCameraDecorations(self):
-        ps = self.cameraScale
-        pos = self.lastCameraPosition
-        cs = self.camSize
-        if ps is None:
-            return
-
         m = self.cam.globalTransform()
         self.cameraItemGroup.setTransform(pg.SRTTransform(m))
 
@@ -290,7 +272,7 @@ class CameraInterface(CameraModuleInterface):
         Manager.logMsg("Camera stopped acquisition.", importance=0)
 
     def showMessage(self, msg, delay=2000):
-        self.module.showMessage(msg, delay)
+        self.mod().showMessage(msg, delay)
 
     def getImageItem(self):
         return self.imageItem

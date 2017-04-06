@@ -28,6 +28,7 @@ class CameraWindow(QtGui.QMainWindow):
         
         self.interfaces = OrderedDict()  # owner: widget
         self.docks = OrderedDict()       # owner: dock
+        self._trackedIface = None
         
         # Start building UI
         QtGui.QMainWindow.__init__(self)
@@ -57,7 +58,7 @@ class CameraWindow(QtGui.QMainWindow):
         # Add a group that will track to the center of the view
         # self.trackedGroup = pg.GroupItem()
         # self.view.addItem(self.trackedGroup)
-
+        
         # search for all devices that provide a cameraModuleInterface() method
         man = Manager.getManager()
         devices = [man.getDevice(dev) for dev in man.listDevices()]
@@ -147,17 +148,16 @@ class CameraWindow(QtGui.QMainWindow):
             self.docks[name] = None
         if hasattr(iface, 'sigNewFrame'):
             iface.sigNewFrame.connect(self.newFrame)
-        if hasattr(iface, 'sigTransformChanged'):
-            iface.sigTransformChanged.connect(self.ifaceTransformChanged)
+        iface.sigStarted.connect(self.updateViewTracking)
+        iface.sigStopped.connect(self.updateViewTracking)
 
         self.sigInterfaceAdded.emit(name, iface)
+        self.updateViewTracking()
 
     def removeInterface(self, name):
         self.interfaces[name].quit()
 
     def _removeInterface(self, iface):
-        print "======== remove", iface
-        print self.interfaces
         name = None
         if isinstance(iface, CameraModuleInterface):
             for k,v in self.interfaces.items():
@@ -174,13 +174,34 @@ class CameraWindow(QtGui.QMainWindow):
         iface = self.interfaces.pop(name)
         if hasattr(iface, 'sigNewFrame'):
             pg.disconnect(iface.sigNewFrame, self.newFrame)
-        if hasattr(iface, 'sigTransformChanged'):
-            pg.disconnect(iface.sigTransformChanged, self.ifaceTransformChanged)
+        pg.disconnect(iface.sigStarted, self.updateViewTracking)
+        pg.disconnect(iface.sigStopped, self.updateViewTracking)
+        
         dock = self.docks.pop(name, None)
         if dock is not None:
             dock.close()
 
         self.sigInterfaceRemoved.emit(name, iface)
+
+    def updateViewTracking(self):
+        """Select a single interface to track.
+        """
+        trackedIface = self._trackedIface
+        for iface in self.interfaces.values():
+            if iface.canImage:
+                # track imaging devices if there are any
+                if trackedIface is None:
+                    trackedIface = iface
+                # prefer imaging devices that are running
+                if iface.isRunning():
+                    trackedIface = iface
+                    break
+                
+        self._trackedIface = trackedIface
+
+        # Update view tracking option for all interfaces 
+        for iface in self.interfaces.values():
+            iface.setViewTracking(iface is trackedIface)
 
     def getView(self):
         return self.view
@@ -270,41 +291,14 @@ class CameraWindow(QtGui.QMainWindow):
         # update ROI plots
         self.roiWidget.newFrame(iface, frame)
     
-    def ifaceTransformChanged(self, iface):
-        # imaging device moved; update viewport and tracked group.
-        # This is only used when the camera is not running--
-        # if the camera is running, then this is taken care of in drawFrame to
-        # ensure that the image remains stationary on screen.
-        prof = Profiler()
-        if not self.cam.isRunning():
-            tr = pg.SRTTransform(self.cam.globalTransform())
-            self.updateTransform(tr)
-            
-    def updateTransform(self, tr):
-        # update view for new transform such that sensor bounds remain stationary on screen.
-        pos = tr.getTranslation()
-        
-        scale = tr.getScale()
-        if scale != self.lastCameraScale:
-            anchor = self.view.mapViewToDevice(self.lastCameraPosition)
-            self.view.scaleBy(scale / self.lastCameraScale)
-            pg.QtGui.QApplication.processEvents()
-            anchor2 = self.view.mapDeviceToView(anchor)
-            diff = pos - anchor2
-            self.lastCameraScale = scale
-        else:
-            diff = pos - self.lastCameraPosition
-            
-        self.view.translateBy(diff)
-        self.lastCameraPosition = pos
-        self.cameraItemGroup.setTransform(tr)
-    
 
 class CameraModuleInterface(QtCore.QObject):
     """ Base class used to plug new interfaces into the camera module.
 
     """
     sigNewFrame = QtCore.Signal(object, object)  # (self, frame)
+    sigStarted = QtCore.Signal(object)
+    sigStopped = QtCore.Signal(object)
 
     # indicates this is an interface to an imaging device. 
     canImage = True
@@ -313,7 +307,10 @@ class CameraModuleInterface(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.mod = weakref.ref(mod)
         self.dev = weakref.ref(dev)
+        self.view = mod.window().getView()
         self._hasQuit = False
+        self._trackView = False
+        self._lastDeviceTransform = None
 
     def getDevice(self):
         return self.dev()
@@ -346,7 +343,36 @@ class CameraModuleInterface(QtCore.QObject):
         """Request the imaging device to acquire a single frame.
         """
         raise NotImplementedError()
-
+    
+    def setViewTracking(self, track):
+        """Called by Camera module to inform this interface that it may 
+        update the view transform to track itself.
+        """
+        self._trackView = track
+    
+    def deviceTransformChanged(self, tr):
+        """Should be called whenever the device's transform has changed.
+        
+        This method causes the view to scale/translate to match the device if
+        it is currently being tracked.
+        """
+        lastTr = self._lastDeviceTransform
+        if tr == lastTr:
+            return
+        if self._trackView and lastTr != None:
+            ## update view for new transform such that sensor bounds remain stationary on screen.
+            pos1 = lastTr.getTranslation()
+            pos2 = tr.getTranslation()
+            scale1 = lastTr.getScale()
+            scale2 = tr.getScale()
+            if scale1 != scale2:
+                scaleRatio = scale2 / scale1
+                self.view.scaleBy(scaleRatio, center=pos1)
+            if pos1 != pos2:
+                self.view.translateBy(pos2 - pos1)
+            
+        self._lastDeviceTransform = tr
+    
     def quit(self):
         """Called when the interface is removed from the camera module or when
         the camera module is about to quit.
@@ -359,8 +385,6 @@ class CameraModuleInterface(QtCore.QObject):
             if scene is not None:
                 scene.removeItem(item)
         self.mod().window()._removeInterface(self)
-
-
 
 
 class PlotROI(pg.ROI):
