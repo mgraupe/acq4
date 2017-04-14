@@ -34,6 +34,7 @@ class ContrastCtrl(QtGui.QWidget):
         self.ui.btnAutoGain.setChecked(True)
         self.ui.zoomLiveBtn.clicked.connect(self.zoomToImage)
         self.ui.alphaSlider.valueChanged.connect(self.alphaChanged)
+        self.ui.hideShowBtn.clicked.connect(self.hideShowImage)
 
     def setImageItem(self, item):
         """Sets the ImageItem that will be affected by the contrast / color controls
@@ -62,7 +63,15 @@ class ContrastCtrl(QtGui.QWidget):
     def alphaChanged(self, val):
         self.alpha = val / self.ui.alphaSlider.maximum() ## slider only works in integers and we need a 0 to 1 value
         self.imageItem.setOpacity(self.alpha)
-
+    
+    def hideShowImage(self):
+        if self.alpha>0.5:
+            self.alpha=0.
+        if self.alpha<0.5:
+            self.alpha=1.
+        self.ui.alphaSlider.setTickPosition(self.alpha*self.ui.alphaSlider.maximum())
+        self.imageItem.setOpacity(self.alpha)
+    
     def getLevels(self):
         return self.ui.histogram.getLevels()
 

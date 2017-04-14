@@ -100,6 +100,10 @@ class Ui_Form(object):
         self.rotateRightChkBox.setTristate(False)
         self.rotateRightChkBox.setObjectName(_fromUtf8("rotateRightChkBox"))
         self.gridLayout.addWidget(self.rotateRightChkBox, 9, 1, 1, 1)
+        
+        self.hideShowBtn = QtGui.QPushButton(Form)
+        self.hideShowBtn.setObjectName(_fromUtf8("hideShowBtn"))
+        self.gridLayout.addWidget(self.hideShowBtn, 5, 0, 1, 2)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -124,8 +128,10 @@ class Ui_Form(object):
         self.zoomLiveBtn.setText(_translate("Form", "Zoom to Image", None))
         self.mirrorChkBox.setText(_translate("Form", "Mirror", None))
         self.label_4.setText(_translate("Form", "Transparency", None))
+
         self.flipChkBox.setText(_translate("Form", "Flip", None))
         self.rotateLeftChkBox.setText(_translate("Form", "Rotate Left", None))
         self.rotateRightChkBox.setText(_translate("Form", "Rotate Right", None))
+        self.hideShowBtn.setText(_translate("Form", "Hide/Show Image", None))
 
 from acq4.pyqtgraph import HistogramLUTWidget
