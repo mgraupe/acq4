@@ -67,9 +67,9 @@ class ContrastCtrl(QtGui.QWidget):
     def hideShowImage(self):
         if self.alpha>0.5:
             self.alpha=0.
-        if self.alpha<0.5:
+        elif self.alpha<0.5:
             self.alpha=1.
-        self.ui.alphaSlider.setTickPosition(self.alpha*self.ui.alphaSlider.maximum())
+        self.ui.alphaSlider.setValue(int(self.alpha*self.ui.alphaSlider.maximum()))
         self.imageItem.setOpacity(self.alpha)
     
     def getLevels(self):
