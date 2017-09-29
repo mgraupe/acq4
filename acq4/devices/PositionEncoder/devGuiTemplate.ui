@@ -42,6 +42,20 @@
      </property>
     </widget>
    </item>
+   <item row="2" column="0" colspan="4">
+    <widget class="QPushButton" name="toggleCounterBtn">
+     <property name="text">
+      <string>Start Postion Counter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="2" colspan="2">
+    <widget class="QLabel" name="counterLabel">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="font">
@@ -68,7 +82,7 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="0">
+   <item row="8" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -120,17 +134,13 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="4">
-    <widget class="QPushButton" name="resetCounterBtn">
-     <property name="text">
-      <string>Reset Distance Counter</string>
+   <item row="5" column="0" colspan="4">
+    <widget class="QPushButton" name="savePositionBtn">
+     <property name="enabled">
+      <bool>false</bool>
      </property>
-    </widget>
-   </item>
-   <item row="4" column="2" colspan="2">
-    <widget class="QLabel" name="counterLabel">
      <property name="text">
-      <string/>
+      <string>Save Positions</string>
      </property>
     </widget>
    </item>
