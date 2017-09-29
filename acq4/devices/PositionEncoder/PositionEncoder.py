@@ -96,13 +96,15 @@ class PositionEncoder(DAQGeneric):
             distance = np.cumsum(-self.delta)/(2.*4.*self.ppu)
             return distance
     
-    def startStopPositionCounter():
+    def startStopPositionCounter(self,b):
         if b :
             self.tStart = time.time()
             self.cThread = EncoderThread(self)
             self.cThread.sigCounterChanged.connect(self.counterChanged)
             self.cThread.start()
-    
+        else:
+            self.cThread.stop()
+            
     def getCounter(self):
         cc = self.getChannelValue('Counter',raw=True)
         dist = cc[0][0]*360./(2.*self.ppu)
@@ -303,20 +305,23 @@ class PositionEncoderDevGui(QtGui.QWidget):
         
         self.dev.sigEncoderCounterChanged.connect(self.counterChanged)
      
-        
+        self.ui.distanceTravelledUnit.setText(self.dev.unit)
         
     def counterChanged(self,pos,ttt):
         self.locations.append([ttt,pos])
-        
+        print self.locations
         if pos is None:
             self.ui.counterLabel.setText("?")
         else:
             self.ui.counterLabel.setText(str(pos))
+            self.ui.timeSpentLabel.setText(str(ttt))
     
     def togglePositionCounter(self,b):
         if b:
             self.locations = []
             self.dev.startStopPositionCounter(True)
+            self.ui.toggleCounterBtn.setText('Stop Position Counter')
+            self.ui.savePositionBtn.setEnabled(False)
             
         else:
             self.dev.startStopPositionCounter(False)
