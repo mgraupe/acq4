@@ -200,7 +200,7 @@ class DAQGeneric(Device):
             return self.mapFromDAQ(channel, val)
         else:
             return val
-
+    
     def reconfigureChannel(self, chan, config):
         """Allows reconfiguration of channel properties (including the actual DAQ channel name)"""
         with self._DGLock:
