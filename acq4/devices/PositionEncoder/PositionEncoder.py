@@ -106,7 +106,10 @@ class PositionEncoder(DAQGeneric):
         #cc = 10
         #print cc
         return cc
-
+    
+    def resetCounter(self):
+       self.reconfigureChannel('Counter',self.config['Counter'])
+        
     def counterChanged(self,count):
         self.sigEncoderCounterChanged.emit(count,raw=True)
         
@@ -290,7 +293,21 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.ui.TypeLabel.setText(self.dev.encoderType)
         self.ui.ResolutionLabel.setText(str(self.dev.ppu))
         self.ui.UnitLabel.setText(self.dev.unit)
-    
+        
+        self.ui.resetCounterBtn.clicked.connect(self.resetCounter)
+        
+        self.dev.sigEncoderCounterChanged.connect(self.counterChanged)
+        
+    def counterChanged(self,counts):
+        position = counts/self.dev.ppu
+        if counts is None:
+            self.ui.counterLabel.setText("?")
+        else:
+            self.ui.counterLabel.setText(siFormat(position, suffix=self.dev.unit))
+            
+    def resetCounter(self):
+        self.dev.resetCounter()
+            
 class EncoderThread(Thread):
 
     sigCounterChanged = QtCore.Signal(object)
