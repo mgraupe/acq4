@@ -524,6 +524,21 @@ def superTaskCountTest():
     
     
 ########################################################################
+def diCounterTask():
+    print "::::::::::::::::::  Digital Input Counter  Test  :::::::::::::::::::::"
+    
+    tCount = n.createTask()
+    tCount.CreateCICountEdgesChan("/Dev2/ctr1", "", n.Val_Rising, 0, n.Val_CountUp)
+    tCount.SetCICountEdgesTerm("/Dev2/ctr1","/Dev2/pfi9")
+    #tCount.CfgSampClkTiming("/Dev2/pfi10", 10000., n.Val_Rising, n.Val_FiniteSamps, 1000)
+
+    tCount.start()
+    time.sleep(0.5)
+    counts = tCount.read()
+
+    tCount.stop()
+
+    return counts
 
 #data = finiteReadTest()
 #outputTest()
@@ -538,4 +553,5 @@ def superTaskCountTest():
 #dd = countPhotonTaskTest()
 #dd = countPhotonTaskAnalogOutputTest()
 dd = superTaskCountTest()
+dd = diCounterTask()
 

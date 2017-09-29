@@ -89,7 +89,7 @@ class NiDAQ(Device):
             self.delayedSet.unlock()
         return Device.release(self)
 
-    def getChannelValue(self, chan, mode=None, block=True):
+    def getChannelValue(self, chan, mode=None, block=True, cType=None):
         if mode is None:
             mode = self.config.get('defaultAIMode', None)
         
@@ -100,6 +100,8 @@ class NiDAQ(Device):
         try:
             if 'ai' in chan:
                 val = self.n.readAnalogSample(chan, mode=mode, vRange=self._defaultAIRange)
+            elif cType == 'ci':
+                val = self.n.readCounter(chan)
             else:
                 val = self.n.readDigitalSample(chan)
                 if val <= 0:
