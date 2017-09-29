@@ -108,7 +108,7 @@ class PositionEncoder(DAQGeneric):
         return cc
 
     def counterChanged(self,count):
-        self.sigEncoderCounterChanged.emit(count)
+        self.sigEncoderCounterChanged.emit(count,raw=True)
         
     def createTask(self, cmd, parentTask):
         return PositionEncoderTask(self, cmd, parentTask)
