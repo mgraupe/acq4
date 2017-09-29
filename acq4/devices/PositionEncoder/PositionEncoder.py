@@ -45,7 +45,7 @@ class PositionEncoder(DAQGeneric):
     sigHideModeDialog = QtCore.Signal()
     sigModeChanged = QtCore.Signal(object)
     
-    sigEncoderCounterChanged = QtCore.Signal(object)
+    sigEncoderCounterChanged = QtCore.Signal(object,object)
 
     def __init__(self, dm, config, name):
         
@@ -78,11 +78,6 @@ class PositionEncoder(DAQGeneric):
         
         DAQGeneric.__init__(self, dm, daqConfig, name)
         
-        self.cThread = EncoderThread(self)
-        self.cThread.sigCounterChanged.connect(self.counterChanged)
-        self.cThread.start()
-
-        self.edgeCounter = 0
         dm.declareInterface(name, ['encoder'], self)
     
     def calculateProgress(self,chanA,chanB):
@@ -100,18 +95,27 @@ class PositionEncoder(DAQGeneric):
         elif self.encoderType == 'linear' :
             distance = np.cumsum(-self.delta)/(2.*4.*self.ppu)
             return distance
-            
+    
+    def startStopPositionCounter():
+        if b :
+            self.tStart = time.time()
+            self.cThread = EncoderThread(self)
+            self.cThread.sigCounterChanged.connect(self.counterChanged)
+            self.cThread.start()
+    
     def getCounter(self):
-        cc = self.getChannelValue('Counter')
+        cc = self.getChannelValue('Counter',raw=True)
+        dist = cc[0][0]*360./(2.*self.ppu)
         #cc = 10
         #print cc
-        return cc
+        return dist
     
     def resetCounter(self):
        self.reconfigureChannel('Counter',self.config['Counter'])
         
     def counterChanged(self,count):
-        self.sigEncoderCounterChanged.emit(count,raw=True)
+        ttt = time.time() - self.tStart
+        self.sigEncoderCounterChanged.emit(count,ttt)
         
     def createTask(self, cmd, parentTask):
         return PositionEncoderTask(self, cmd, parentTask)
@@ -294,19 +298,33 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.ui.ResolutionLabel.setText(str(self.dev.ppu))
         self.ui.UnitLabel.setText(self.dev.unit)
         
-        self.ui.resetCounterBtn.clicked.connect(self.resetCounter)
+        self.ui.toggleCounterBtn.toggled.connect(self.togglePositionCounter)
+        self.ui.savePositionBtn.clicked.connect(self.savePositions)
         
         self.dev.sigEncoderCounterChanged.connect(self.counterChanged)
+     
         
-    def counterChanged(self,counts):
-        position = counts/self.dev.ppu
-        if counts is None:
+        
+    def counterChanged(self,pos,ttt):
+        self.locations.append([ttt,pos])
+        
+        if pos is None:
             self.ui.counterLabel.setText("?")
         else:
-            self.ui.counterLabel.setText(siFormat(position, suffix=self.dev.unit))
+            self.ui.counterLabel.setText(str(pos))
+    
+    def togglePositionCounter(self,b):
+        if b:
+            self.locations = []
+            self.dev.startStopPositionCounter(True)
             
-    def resetCounter(self):
-        self.dev.resetCounter()
+        else:
+            self.dev.startStopPositionCounter(False)
+            self.ui.savePositionBtn.setEnabled(True)
+        
+    def savePositions(self):
+        print 'positios saved'
+        
             
 class EncoderThread(Thread):
 
