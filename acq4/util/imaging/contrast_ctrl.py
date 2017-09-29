@@ -95,8 +95,10 @@ class ContrastCtrl(QtGui.QWidget):
 
         if self.ui.btnAutoGain.isChecked():
             cw = self.ui.spinAutoGainCenterWeight.value()
-            (w,h) = data.shape
-            center = data[int(w/2.-w/6.):int(w/2.+w/6.), int(h/2.-h/6.):int(h/2.+h/6.)]
+            #(w,h) = data.shape
+            #center = data[int(w/2.-w/6.):int(w/2.+w/6.), int(h/2.-h/6.):int(h/2.+h/6.)]
+            (w, h) = data.shape
+            center = data[w//2-w//6:w//2+w//6, h//2-h//6:h//2+h//6]
             minVal = data.min() * (1.0-cw) + center.min() * cw
             maxVal = data.max() * (1.0-cw) + center.max() * cw
 
