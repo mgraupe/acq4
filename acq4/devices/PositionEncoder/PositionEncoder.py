@@ -103,8 +103,8 @@ class PositionEncoder(DAQGeneric):
             
     def getCounter(self):
         cc = self.getChannelValue('Counter')
-        cc = 10
-        print cc
+        #cc = 10
+        #print cc
         return cc
 
     def counterChanged(self,count):
@@ -315,4 +315,24 @@ class EncoderThread(Thread):
                 counts = self.dev.getCounter()
                 self.sigCounterChanged.emit(counts)
                 time.sleep(0.5)       
-        
+            except:
+                debug.printExc("Error in PositionEncoder communication thread:")
+
+            self.lock.lock()
+            if self.stopThread:
+                self.lock.unlock()
+                break
+            self.lock.unlock()
+            time.sleep(0.02)
+
+        #self.driver.close()
+
+    def stop(self, block=False):
+        with self.lock:
+            self.stopThread = True
+        if block:
+            if not self.wait(10000):
+                raise Exception("Timed out while waiting for thread exit!")
+            
+            
+            
