@@ -116,8 +116,8 @@ class PositionEncoder(DAQGeneric):
        self.reconfigureChannel('Counter',self.config['Counter'])
         
     def counterChanged(self,count):
-        ttt = time.time() - self.tStart
-        self.sigEncoderCounterChanged.emit(count,ttt)
+        ttt = np.round((time.time() - self.tStart),1)
+        self.sigEncoderCounterChanged.emit(count[0],ttt)
         
     def createTask(self, cmd, parentTask):
         return PositionEncoderTask(self, cmd, parentTask)
@@ -314,7 +314,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.counterLabel.setText("?")
         else:
             self.ui.counterLabel.setText(str(pos))
-            self.ui.timeSpentLabel.setText(str(ttt))
+            self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
     
     def togglePositionCounter(self,b):
         if b:
@@ -326,6 +326,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
         else:
             self.dev.startStopPositionCounter(False)
             self.ui.savePositionBtn.setEnabled(True)
+            self.ui.toggleCounterBtn.setText('Start Position Counter')
         
     def savePositions(self):
         print 'positios saved'
@@ -354,7 +355,7 @@ class EncoderThread(Thread):
             try:
                 counts = self.dev.getCounter()
                 self.sigCounterChanged.emit(counts)
-                time.sleep(0.5)       
+                time.sleep(1.)       
             except:
                 debug.printExc("Error in PositionEncoder communication thread:")
 
