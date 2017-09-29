@@ -15,6 +15,8 @@ from acq4.util.debug import printExc
 from devGuiTemplate import Ui_encoderDevGui
 from acq4.pyqtgraph import PlotWidget
 import acq4.util.metaarray as metaarray
+from acq4.util.Thread import Thread
+import acq4.util.debug as debug
 import weakref
 
     
@@ -42,6 +44,8 @@ class PositionEncoder(DAQGeneric):
     sigShowModeDialog = QtCore.Signal(object)
     sigHideModeDialog = QtCore.Signal()
     sigModeChanged = QtCore.Signal(object)
+    
+    sigEncoderCounterChanged = QtCore.Signal(object)
 
     def __init__(self, dm, config, name):
         
@@ -54,6 +58,8 @@ class PositionEncoder(DAQGeneric):
                 raise Exception("PositionEncoder: configuration must have ChannelA and ChannelB information.")
             daqConfig[ch]  = config[ch].copy()
         
+        if 'Counter' in config:
+            daqConfig['Counter'] = config['Counter']
         
         self.encoderType = config.get('encoderType', None)
         self.ppu = config.get('PPU', None)
@@ -72,6 +78,10 @@ class PositionEncoder(DAQGeneric):
         
         DAQGeneric.__init__(self, dm, daqConfig, name)
         
+        self.cThread = EncoderThread(self)
+        self.cThread.sigCounterChanged.connect(self.counterChanged)
+        self.cThread.start()
+
         self.edgeCounter = 0
         dm.declareInterface(name, ['encoder'], self)
     
@@ -91,6 +101,14 @@ class PositionEncoder(DAQGeneric):
             distance = np.cumsum(-self.delta)/(2.*4.*self.ppu)
             return distance
             
+    def getCounter(self):
+        cc = self.getChannelValue('Counter')
+        cc = 10
+        print cc
+        return cc
+
+    def counterChanged(self,count):
+        self.sigEncoderCounterChanged.emit(count)
         
     def createTask(self, cmd, parentTask):
         return PositionEncoderTask(self, cmd, parentTask)
@@ -273,5 +291,28 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.ui.ResolutionLabel.setText(str(self.dev.ppu))
         self.ui.UnitLabel.setText(self.dev.unit)
     
-        
+class EncoderThread(Thread):
+
+    sigCounterChanged = QtCore.Signal(object)
+
+    def __init__(self, dev):
+        Thread.__init__(self)
+        self.lock = Mutex(QtCore.QMutex.Recursive)
+        self.dev = dev
+        self.cmds = {}
+
+    def setShutter(self, opened):
+        wait = QtCore.QWaitCondition()
+        cmd = ['setShutter', opened]
+        with self.lock:
+            self.cmds.append(cmd)
+
+
+    def run(self):
+        self.stopThread = False
+        while True:
+            try:
+                counts = self.dev.getCounter()
+                self.sigCounterChanged.emit(counts)
+                time.sleep(0.5)       
         

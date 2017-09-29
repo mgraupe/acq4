@@ -189,11 +189,12 @@ class DAQGeneric(Device):
         with self._DGLock:
             daq = self._DGConfig[channel]['device']
             chan = self._DGConfig[channel]['channel']
+            chanType = self._DGConfig[channel]['type']
             mode = self._DGConfig[channel].get('mode', None)
             
         ## release _DGLock before getChannelValue
         daqDev = self.dm.getDevice(daq)
-        val = daqDev.getChannelValue(chan, mode=mode, block=block)
+        val = daqDev.getChannelValue(chan, mode=mode, block=block, cType=chanType)
         if not raw:
             return self.mapFromDAQ(channel, val)
         else:

@@ -204,7 +204,22 @@ class _NIDAQ:
             t.CreateDIChan(chan, "", LIB.Val_ChanForAllLines)
             self._scalarTasks[key] = t
         return t.ReadDigitalScalarU32(timeout)
-        
+    
+    def readCounter(self, chan, timeout=10.0):
+        """Get the value of a CI port"""
+        key = ('ci', chan)
+        t = self._scalarTasks.get(key, None)
+        #print t
+        if t is None:
+            t = self.createTask()
+            t.CreateCICountEdgesChan("/Dev2/ctr1", "", LIB.Val_Rising, 0, LIB.Val_CountUp)
+            t.SetCICountEdgesTerm("/Dev2/ctr1",chan)
+            #t.CreateDIChan(chan, "", LIB.Val_ChanForAllLines)
+            print 'counting created task', key
+            self._scalarTasks[key] = t
+        return t.ReadDigitalScalarU32(timeout)
+    
+    
     def listAIChannels(self, dev=None):
         return self.GetDevAIPhysicalChans(dev).split(", ")
 
@@ -311,7 +326,10 @@ class Task:
             
         fName += dtypes[np.dtype(dtype).descr[0][1]]
         
-        self.SetReadRelativeTo(LIB.Val_FirstSample)
+        if tt == LIB.Val_CI:
+            self.SetReadRelativeTo(LIB.Val_CurrReadPos)
+        else:
+            self.SetReadRelativeTo(LIB.Val_FirstSample)
         self.SetReadOffset(0)
         
         ## buf.ctypes is a c_void_p, but the function requires a specific pointer type so we are forced to recast the pointer:
