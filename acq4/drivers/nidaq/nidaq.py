@@ -221,11 +221,11 @@ class _NIDAQ:
             t = self.createTask()
             t.CreateCICountEdgesChan("/Dev2/ctr1", "", LIB.Val_Rising, 0, LIB.Val_CountUp)
             t.SetCICountEdgesTerm("/Dev2/ctr1",chan)
+            t.start()
             #t.CreateDIChan(chan, "", LIB.Val_ChanForAllLines)
-            print 'counting created task', key
+            #print 'counting created task', key
             self._scalarTasks[key] = t
-        return t.ReadDigitalScalarU32(timeout)
-    
+        return t.read()
     
     def listAIChannels(self, dev=None):
         return self.GetDevAIPhysicalChans(dev).split(", ")
