@@ -25,7 +25,7 @@ except AttributeError:
 class Ui_encoderDevGui(object):
     def setupUi(self, encoderDevGui):
         encoderDevGui.setObjectName(_fromUtf8("encoderDevGui"))
-        encoderDevGui.resize(310, 176)
+        encoderDevGui.resize(310, 192)
         self.gridLayout = QtGui.QGridLayout(encoderDevGui)
         self.gridLayout.setMargin(0)
         self.gridLayout.setSpacing(3)
@@ -116,9 +116,12 @@ class Ui_encoderDevGui(object):
         font.setBold(True)
         font.setWeight(75)
         self.ActivityLabel.setFont(font)
+        self.ActivityLabel.setText(_fromUtf8(""))
         self.ActivityLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.ActivityLabel.setObjectName(_fromUtf8("ActivityLabel"))
         self.gridLayout_2.addWidget(self.ActivityLabel, 0, 1, 1, 2)
+        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem, 5, 0, 1, 1)
         self.gridLayout.addWidget(self.gridGroupBox, 6, 0, 2, 4)
 
         self.retranslateUi(encoderDevGui)
@@ -137,5 +140,4 @@ class Ui_encoderDevGui(object):
         self.label_5.setText(_translate("encoderDevGui", "Time Spent", None))
         self.savePositionBtn.setText(_translate("encoderDevGui", "Save Positions", None))
         self.label_6.setText(_translate("encoderDevGui", "Currently", None))
-        self.ActivityLabel.setText(_translate("encoderDevGui", "TextLabel", None))
 
