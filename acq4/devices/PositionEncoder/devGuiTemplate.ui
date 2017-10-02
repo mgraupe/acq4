@@ -129,7 +129,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="3" column="0">
        <widget class="QLabel" name="label_3">
         <property name="font">
          <font>
@@ -142,7 +142,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="3">
+      <item row="2" column="0" colspan="3">
        <widget class="QPushButton" name="toggleCounterBtn">
         <property name="text">
          <string>Start Postion Counter</string>
@@ -152,7 +152,7 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
+      <item row="3" column="1">
        <widget class="QLabel" name="counterLabel">
         <property name="text">
          <string/>
@@ -172,21 +172,21 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
+      <item row="3" column="2">
        <widget class="QLabel" name="distanceTravelledUnit">
         <property name="text">
          <string>TextLabel</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
+      <item row="4" column="2">
        <widget class="QLabel" name="label_7">
         <property name="text">
          <string>sec</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_5">
         <property name="font">
          <font>
@@ -199,20 +199,47 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QLabel" name="timeSpentLabel">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="4" column="0" colspan="3">
+      <item row="5" column="0" colspan="3">
        <widget class="QPushButton" name="savePositionBtn">
         <property name="enabled">
          <bool>false</bool>
         </property>
         <property name="text">
          <string>Save Positions</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Speed</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="SpeedLabel">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="SpeedUnit">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>
