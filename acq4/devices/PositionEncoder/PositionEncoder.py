@@ -317,7 +317,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.counterLabel.setText("?")
         else:
             
-            activity = pos-oldPos
+            activity = pos-self.oldPos
             if np.abs(activity)>0:
                 self.ui.ActivityLabel.setText('walking')
                 self.ui.ActivityLabel.setStyleSheet("QLabel {color: #B00}")
