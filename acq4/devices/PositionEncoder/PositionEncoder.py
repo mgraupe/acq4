@@ -98,6 +98,7 @@ class PositionEncoder(DAQGeneric):
     
     def startStopPositionCounter(self,b):
         if b :
+            self.resetCounter()
             self.tStart = time.time()
             self.cThread = EncoderThread(self)
             self.cThread.sigCounterChanged.connect(self.counterChanged)
@@ -113,7 +114,7 @@ class PositionEncoder(DAQGeneric):
         return dist
     
     def resetCounter(self):
-       self.reconfigureChannel('Counter',self.config['Counter'])
+       self.resetCounterValue('Counter')
         
     def counterChanged(self,count):
         ttt = np.round((time.time() - self.tStart),1)
