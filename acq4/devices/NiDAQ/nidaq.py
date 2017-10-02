@@ -114,7 +114,22 @@ class NiDAQ(Device):
         finally:
             self.release()
         return val
+    
+    def resetCounterValue(self,chan, mode=None, block=True, cType=None):
         
+        res = self.reserve(block=block)
+        if not res:  ## False means non-blocking lock attempt failed.
+            return False
+        try:
+            if cType == 'ci':
+                val = self.n.resetCounter(chan)
+        except:
+            printExc("Error while resetting channel value %s:" % str(chan))
+            raise
+        finally:
+            self.release()
+        return val
+    
     def taskInterface(self, taskRunner):
         return NiDAQTask(self, taskRunner)
         

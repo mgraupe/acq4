@@ -220,6 +220,17 @@ class _NIDAQ:
             self._scalarTasks[key] = t
         return t.read()
     
+    def resetCounter(self, chan, timeout=10.0):
+        """Reset a counter """
+        key = ('ci', chan)
+        t = self._scalarTasks.get(key, None)
+        print 'resetting counter for ',key'...',
+        if t is not None:
+            print ' done!'
+            t.stop()
+            del(t)
+            return self.readCounter(chan)
+            
     def listAIChannels(self, dev=None):
         return self.GetDevAIPhysicalChans(dev).split(", ")
 
