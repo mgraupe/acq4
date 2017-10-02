@@ -314,8 +314,23 @@ class PositionEncoderDevGui(QtGui.QWidget):
         if pos is None:
             self.ui.counterLabel.setText("?")
         else:
+            try :
+                activity = pos-oldPos
+            except:
+                pass
+            else:
+                if np.abs(activity)>0:
+                    self.ui.ActivityLabel.setText('walking')
+                    self.ui.ActivityLabel.setStyleSheet("QLabel {color: #B00}")
+                else:
+                    self.ui.ActivityLabel.setText('resting')
+                    self.ui.ActivityLabel.setStyleSheet("QLabel {color: #000}")
+                    
             self.ui.counterLabel.setText(str(pos))
             self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
+            oldPos = pos
+            
+            
     
     def togglePositionCounter(self,b):
         if b:

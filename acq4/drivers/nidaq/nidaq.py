@@ -228,7 +228,7 @@ class _NIDAQ:
         if t is not None:
             print ' done!'
             t.stop()
-            del(t)
+            t.start()
             return self.readCounter(chan)
             
     def listAIChannels(self, dev=None):
