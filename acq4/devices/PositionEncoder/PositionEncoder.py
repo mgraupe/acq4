@@ -79,7 +79,8 @@ class PositionEncoder(DAQGeneric):
         DAQGeneric.__init__(self, dm, daqConfig, name)
         
         dm.declareInterface(name, ['encoder'], self)
-    
+        self.dm = dm
+        
     def calculateProgress(self,chanA,chanB):
         
         chanAB = chanA.astype(bool)
@@ -129,7 +130,22 @@ class PositionEncoder(DAQGeneric):
     def deviceInterface(self, win):
         return PositionEncoderDevGui(self)
     
-        
+    def savePositions(self,data):
+        dirHandle= self.dm.getCurrentDir()
+        #DAQGenericTask.storeResult(self, dirHandle)
+        #dirHandle.setInfo(self.ampState)
+        #dirHandle =  dm.getCurrentDir()
+        result = self.getPosResult(data)
+        dirHandle.writeFile(result, self.encoderName)
+
+    def getPosResult(self,ddd):
+        #result = {}
+        data = np.asarray(ddd)
+        #result['data'] =
+
+        info = [axis(name='time', units='s',values=data[1])]
+        marr = MetaArray(data[0], info=info)
+        return marr    
 class PositionEncoderTask(DAQGenericTask):
     def __init__(self, dev, cmd, parentTask):
         self.dev = dev
@@ -308,16 +324,21 @@ class PositionEncoderDevGui(QtGui.QWidget):
      
         self.ui.distanceTravelledUnit.setText(self.dev.unit)
         
+        self.ui.SpeedUnit.setText(self.dev.unit+'/s')
+        
         self.oldPos = 0.
+        self.oldTime = time.time()
         
     def counterChanged(self,pos,ttt):
         self.locations.append([ttt,pos])
-        print self.locations
+        #print self.locations
         if pos is None:
             self.ui.counterLabel.setText("?")
         else:
             
             activity = pos-self.oldPos
+            dt       = ttt-self.oldTime
+            self.ui.SpeedLabel.setText(str(round(activity/dt,2)))
             if np.abs(activity)>0:
                 self.ui.ActivityLabel.setText('walking')
                 self.ui.ActivityLabel.setStyleSheet("QLabel {color: #B00}")
@@ -328,6 +349,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.counterLabel.setText(str(pos))
             self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
             self.oldPos = pos
+            self.oldTime = ttt
     
     def togglePositionCounter(self,b):
         if b:
@@ -342,8 +364,8 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.toggleCounterBtn.setText('Start Position Counter')
         
     def savePositions(self):
-        print 'positios saved'
-        
+        #print 'positios saved'
+        self.dev.savePositions(self.locations)
             
 class EncoderThread(Thread):
 
