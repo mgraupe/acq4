@@ -224,7 +224,7 @@ class _NIDAQ:
         """Reset a counter """
         key = ('ci', chan)
         t = self._scalarTasks.get(key, None)
-        print 'resetting counter for ',key'...',
+        print 'resetting counter for ',key,'...',
         if t is not None:
             print ' done!'
             t.stop()

@@ -308,6 +308,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
      
         self.ui.distanceTravelledUnit.setText(self.dev.unit)
         
+        
     def counterChanged(self,pos,ttt):
         self.locations.append([ttt,pos])
         print self.locations
@@ -329,8 +330,6 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.counterLabel.setText(str(pos))
             self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
             oldPos = pos
-            
-            
     
     def togglePositionCounter(self,b):
         if b:
