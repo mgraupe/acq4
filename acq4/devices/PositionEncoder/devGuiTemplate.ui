@@ -113,7 +113,7 @@
       <string>Activity</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="1" colspan="2">
+      <item row="1" column="1" colspan="2">
        <widget class="QLabel" name="ActivityLabel">
         <property name="font">
          <font>
@@ -129,7 +129,7 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="6" column="0">
        <widget class="QLabel" name="label_3">
         <property name="font">
          <font>
@@ -142,24 +142,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0" colspan="3">
-       <widget class="QPushButton" name="toggleCounterBtn">
-        <property name="text">
-         <string>Start Postion Counter</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
+      <item row="6" column="1">
        <widget class="QLabel" name="counterLabel">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
+      <item row="1" column="0">
        <widget class="QLabel" name="label_6">
         <property name="font">
          <font>
@@ -172,21 +162,21 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
+      <item row="6" column="2">
        <widget class="QLabel" name="distanceTravelledUnit">
         <property name="text">
-         <string>TextLabel</string>
+         <string/>
         </property>
        </widget>
       </item>
-      <item row="4" column="2">
+      <item row="5" column="2">
        <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>sec</string>
+         <string>min</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="5" column="0">
        <widget class="QLabel" name="label_5">
         <property name="font">
          <font>
@@ -199,24 +189,64 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="1">
+      <item row="4" column="2">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>min</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="SpeedLabel">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
        <widget class="QLabel" name="timeSpentLabel">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="5" column="0" colspan="3">
-       <widget class="QPushButton" name="savePositionBtn">
-        <property name="enabled">
-         <bool>false</bool>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
         </property>
         <property name="text">
-         <string>Save Positions</string>
+         <string>Duration to Monitor</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="9" column="0" colspan="3">
+       <widget class="QCheckBox" name="saveDataCheckBox">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Save Data</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="MonitorTimeSpinBox">
+        <property name="value">
+         <number>20</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
        <widget class="QLabel" name="label_8">
         <property name="font">
          <font>
@@ -229,17 +259,20 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="SpeedLabel">
+      <item row="2" column="2">
+       <widget class="QLabel" name="SpeedUnit">
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="SpeedUnit">
+      <item row="0" column="0" colspan="3">
+       <widget class="QPushButton" name="toggleCounterBtn">
         <property name="text">
-         <string/>
+         <string>Start Activity Monitor</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
