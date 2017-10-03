@@ -139,7 +139,7 @@ class PositionEncoder(DAQGeneric):
     
     def savePositions(self,data):
         result = self.getPosResult(data)
-        dirHandle.writeFile(result, self.encoderName)
+        self.dirHandle.writeFile(result, self.encoderName)
 
     def getPosResult(self,ddd):
         data = np.asarray(ddd)
@@ -319,7 +319,8 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.ui.ResolutionLabel.setText(str(self.dev.ppu))
         self.ui.UnitLabel.setText(self.dev.unit)
         
-        self.ui.MonitorTimeSpinBox.setOpts(suffix='min', siPrefix=True, bounds=[0.0, 120.0], dec=True, step=1., minStep=0.1)
+        #self.ui.MonitorTimeSpinBox.setOpts(suffix='min', siPrefix=True, bounds=[0.0, 120.0], dec=True, step=1., minStep=0.1)
+        self.ui.MonitorTimeSpinBox.setOpts(step=1,bounds=[0.0, 120.0],dec=False,minStep=0.1,decimals=3)
         
         self.ui.toggleCounterBtn.toggled.connect(self.togglePositionCounter)
         #self.ui.savePositionBtn.clicked.connect(self.savePositions)
@@ -353,18 +354,17 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
             self.oldPos = pos
             self.oldTime = ttt
-            if ttt >= self.ui.MonitorTimeSpinBox.value():
+            if ttt >= (60.*self.ui.MonitorTimeSpinBox.value()):
                 self.ui.toggleCounterBtn.click()
     
     def togglePositionCounter(self,b):
         if b:
             self.dev.startStopPositionCounter(True)
             self.ui.toggleCounterBtn.setText('Stop Activity Monitor')
-            self.ui.savePositionBtn.setEnabled(False)
-            
+            self.ui.MonitorTimeSpinBox.setEnabled(False)
         else:
             self.dev.startStopPositionCounter(False)
-            self.ui.savePositionBtn.setEnabled(True)
+            self.ui.MonitorTimeSpinBox.setEnabled(True)
             self.ui.toggleCounterBtn.setText('Start Activity Monitor')
     def saveDataToggled(self,b):
         if b:
