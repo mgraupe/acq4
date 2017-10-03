@@ -80,7 +80,7 @@ class PositionEncoder(DAQGeneric):
         
         dm.declareInterface(name, ['encoder'], self)
         self.dm = dm
-        self.dev.saveData = True
+        self.saveData = True
         
     def calculateProgress(self,chanA,chanB):
         

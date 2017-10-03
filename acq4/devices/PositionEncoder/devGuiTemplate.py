@@ -137,10 +137,6 @@ class Ui_encoderDevGui(object):
         self.saveDataCheckBox.setChecked(True)
         self.saveDataCheckBox.setObjectName(_fromUtf8("saveDataCheckBox"))
         self.gridLayout_2.addWidget(self.saveDataCheckBox, 9, 0, 1, 3)
-        self.MonitorTimeSpinBox = QtGui.QSpinBox(self.gridGroupBox)
-        self.MonitorTimeSpinBox.setProperty("value", 20)
-        self.MonitorTimeSpinBox.setObjectName(_fromUtf8("MonitorTimeSpinBox"))
-        self.gridLayout_2.addWidget(self.MonitorTimeSpinBox, 4, 1, 1, 1)
         self.label_8 = QtGui.QLabel(self.gridGroupBox)
         font = QtGui.QFont()
         font.setBold(True)
@@ -156,6 +152,13 @@ class Ui_encoderDevGui(object):
         self.toggleCounterBtn.setCheckable(True)
         self.toggleCounterBtn.setObjectName(_fromUtf8("toggleCounterBtn"))
         self.gridLayout_2.addWidget(self.toggleCounterBtn, 0, 0, 1, 3)
+        self.MonitorTimeSpinBox = SpinBox(self.gridGroupBox)
+        self.MonitorTimeSpinBox.setSuffix(_fromUtf8(""))
+        self.MonitorTimeSpinBox.setDecimals(1)
+        self.MonitorTimeSpinBox.setMaximum(180.0)
+        self.MonitorTimeSpinBox.setProperty("value", 20.0)
+        self.MonitorTimeSpinBox.setObjectName(_fromUtf8("MonitorTimeSpinBox"))
+        self.gridLayout_2.addWidget(self.MonitorTimeSpinBox, 4, 1, 1, 1)
         self.gridLayout.addWidget(self.gridGroupBox, 2, 0, 1, 4)
 
         self.retranslateUi(encoderDevGui)
@@ -177,3 +180,4 @@ class Ui_encoderDevGui(object):
         self.label_8.setText(_translate("encoderDevGui", "Speed", None))
         self.toggleCounterBtn.setText(_translate("encoderDevGui", "Start Activity Monitor", None))
 
+from acq4.pyqtgraph import SpinBox
