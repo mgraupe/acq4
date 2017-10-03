@@ -80,6 +80,7 @@ class PositionEncoder(DAQGeneric):
         
         dm.declareInterface(name, ['encoder'], self)
         self.dm = dm
+        self.dev.saveData = True
         
     def calculateProgress(self,chanA,chanB):
         
@@ -99,6 +100,9 @@ class PositionEncoder(DAQGeneric):
     
     def startStopPositionCounter(self,b):
         if b :
+            if self.saveData:
+                self.locations = []
+                self.dirHandle = self.dm.getCurrentDir().getDir(self.encoderName, create=True, autoIncrement=True)
             self.resetCounter()
             self.tStart = time.time()
             self.cThread = EncoderThread(self)
@@ -119,6 +123,9 @@ class PositionEncoder(DAQGeneric):
         
     def counterChanged(self,count):
         ttt = np.round((time.time() - self.tStart),1)
+        if self.saveData:
+            self.locations.append([ttt,count[0]])
+            self.savePositions(self.locations)
         self.sigEncoderCounterChanged.emit(count[0],ttt)
         
     def createTask(self, cmd, parentTask):
@@ -131,21 +138,17 @@ class PositionEncoder(DAQGeneric):
         return PositionEncoderDevGui(self)
     
     def savePositions(self,data):
-        dirHandle= self.dm.getCurrentDir()
-        #DAQGenericTask.storeResult(self, dirHandle)
-        #dirHandle.setInfo(self.ampState)
-        #dirHandle =  dm.getCurrentDir()
         result = self.getPosResult(data)
         dirHandle.writeFile(result, self.encoderName)
 
     def getPosResult(self,ddd):
-        #result = {}
         data = np.asarray(ddd)
-        #result['data'] =
+        chanList = [np.atleast_2d(data[:,1])]
+        arr = np.concatenate(chanList)
+        info = [axis(name='Channel', cols=[('ChannelA','degrees')]), axis(name='Time', units='s', values=data[:,0])] + [{'config': self.config}]
+        marr = MetaArray(arr, info=info)
+        return marr
 
-        info = [axis(name='time', units='s',values=data[1])]
-        marr = MetaArray(data[0], info=info)
-        return marr    
 class PositionEncoderTask(DAQGenericTask):
     def __init__(self, dev, cmd, parentTask):
         self.dev = dev
@@ -194,7 +197,6 @@ class PositionEncoderTask(DAQGenericTask):
         elif self.dev.encoderType == 'linear' :
             result._info[0]['cols'].append({'name': 'distance', 'units': self.dev.unit})
         
-
 
         info = {'PPU': self.dev.ppu,
                 'encoderType': self.dev.encoderType,
@@ -317,9 +319,11 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.ui.ResolutionLabel.setText(str(self.dev.ppu))
         self.ui.UnitLabel.setText(self.dev.unit)
         
-        self.ui.toggleCounterBtn.toggled.connect(self.togglePositionCounter)
-        self.ui.savePositionBtn.clicked.connect(self.savePositions)
+        self.ui.MonitorTimeSpinBox.setOpts(suffix='min', siPrefix=True, bounds=[0.0, 120.0], dec=True, step=1., minStep=0.1)
         
+        self.ui.toggleCounterBtn.toggled.connect(self.togglePositionCounter)
+        #self.ui.savePositionBtn.clicked.connect(self.savePositions)
+        self.ui.saveDataCheckBox.toggled.connect(self.saveDataToggled)
         self.dev.sigEncoderCounterChanged.connect(self.counterChanged)
      
         self.ui.distanceTravelledUnit.setText(self.dev.unit)
@@ -330,8 +334,7 @@ class PositionEncoderDevGui(QtGui.QWidget):
         self.oldTime = time.time()
         
     def counterChanged(self,pos,ttt):
-        self.locations.append([ttt,pos])
-        #print self.locations
+
         if pos is None:
             self.ui.counterLabel.setText("?")
         else:
@@ -350,19 +353,25 @@ class PositionEncoderDevGui(QtGui.QWidget):
             self.ui.timeSpentLabel.setText(str(int(ttt)/60)+':'+str(ttt % 60))
             self.oldPos = pos
             self.oldTime = ttt
+            if ttt >= self.ui.MonitorTimeSpinBox.value():
+                self.ui.toggleCounterBtn.click()
     
     def togglePositionCounter(self,b):
         if b:
-            self.locations = []
             self.dev.startStopPositionCounter(True)
-            self.ui.toggleCounterBtn.setText('Stop Position Counter')
+            self.ui.toggleCounterBtn.setText('Stop Activity Monitor')
             self.ui.savePositionBtn.setEnabled(False)
             
         else:
             self.dev.startStopPositionCounter(False)
             self.ui.savePositionBtn.setEnabled(True)
-            self.ui.toggleCounterBtn.setText('Start Position Counter')
-        
+            self.ui.toggleCounterBtn.setText('Start Activity Monitor')
+    def saveDataToggled(self,b):
+        if b:
+            self.dev.saveData = True
+        else:
+            self.dev.saveData = False
+            
     def savePositions(self):
         #print 'positios saved'
         self.dev.savePositions(self.locations)
