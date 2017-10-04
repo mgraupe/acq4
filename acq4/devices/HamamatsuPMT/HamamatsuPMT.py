@@ -63,6 +63,10 @@ class HamamatsuPMT(PMT):
         self.currentSetGain = config.get('PMTgain',0.85)
         self.gainStepSize = 0.001
         self.gainStepWait = 0.01 # in sec
+        self.HVpowerTimeOut = 3.
+        self.PelPowerTimeOut = 1.
+        self.fixingOverloadError = False
+        self.fixingPelError = False
         
         PMT.__init__(self, dm, config, name)
         self.hamamatsuLock = Mutex(QtCore.QMutex.Recursive)  ## access to self.attributes
@@ -110,22 +114,18 @@ class HamamatsuPMT(PMT):
     def setPMTGain(self,value):
         self.currentSetGain = value
     
-    def changePMTGain(self,newGain=None):
-        if newGain == None:
-            nG = self.currentSetGain
+    def changePMTGain(self,newGain=False):
+        if gainOn:
+            with self.hamamatsuLock:
+                self.setChanHolding('VcontExt',1)    
         else:
-            nG = newGain
-        steps = abs(int((nG-self.currentGain)/self.gainStepSize))
-        for ga in np.linspace(self.currentGain,nG,steps):
-            self.setChanHolding('VcontExt',ga)
-            time.sleep(self.gainStepWait)
-        print 'gain changed from ',self.currentGain, ' to ', nG, ' in ', steps, ' steps'
-        self.currentGain = nG
-    
+            with self.hamamatsuLock:
+                self.setChanHolding('VcontExt',0)
+
     def deactivatePMT(self):
-        if isHVOn():
+        if self.isHVOn():
             self.deactivateHV()
-        if isPeltierOn():
+        if self.isPeltierOn():
             self.deactivatePeltier()
     
     def activatePeltier(self):
@@ -135,6 +135,8 @@ class HamamatsuPMT(PMT):
         print 'Peltier:', self.isPeltierOn()
         
     def deactivatePeltier(self):
+        if self.isHVOn():
+            self.deactivateHV()
         print 'Peltier:', self.isPeltierOn()
         print 'turn Peltier off'
         self.switchPeltierOff()
@@ -144,12 +146,12 @@ class HamamatsuPMT(PMT):
         print 'High Voltage:', self.isHVOn()
         print 'turn High Voltage on'
         self.switchHVOn()
-        self.changePMTGain()
+        self.changePMTGain(gainOn=True)
         print 'High voltage:',self.isHVOn()
         
     def deactivateHV(self):
         print 'turn High Voltage off'
-        self.changePMTGain(0.)
+        self.changePMTGain(gainOn=False)
         self.switchHVOff()
         print 'High voltage:',self.isHVOn()
     
@@ -176,11 +178,28 @@ class HamamatsuPMT(PMT):
     def coolerError(self,coolerError):
         with self.hamamatsuLock:   
             self.sigCoolerErrorOccurred.emit(coolerError)
-    
+            if (coolerError) and (not self.fixingPelError):
+                self.fixingPelError = True
+                self.deactivateHV()
+                time.sleep(self.HVpowerTimeOut)
+                self.deactivatePeltier()
+                time.sleep(self.PelPowerTimeOut)
+                self.activatePeltier()
+                self.activateHV()
+                self.fixingPelError = False
+                
     def overloadError(self,overloadError):
         with self.hamamatsuLock:   
             self.sigOverloadErrorOccurred.emit(overloadError)
-            
+            if (overloadError) and (not self.fixingOverloadError):
+                self.fixingOverloadError = True
+                self.deactivateHV()
+                print 'high voltage time out ...',
+                time.sleep(self.HVpowerTimeOut)
+                print 'ended'
+                self.activateHV()
+                self.fixingOverloadError = False
+                
     def peltierStatus(self,peltierStat):
         with self.hamamatsuLock:
             self.sigPeltierStatus.emit(peltierStat)
