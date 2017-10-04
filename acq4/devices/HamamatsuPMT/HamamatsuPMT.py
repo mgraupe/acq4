@@ -60,8 +60,8 @@ class HamamatsuPMT(PMT):
     sigPMTPower = QtCore.Signal(object)
     
     def __init__(self, dm, config, name):
-        self.currentSetGain = config.get('PMTgain',0.85)
-        self.HVpowerTimeOut = 6.
+        #self.currentSetGain = config.get('PMTgain',0.85)
+        self.HVpowerTimeOut = 4.
         self.PelPowerTimeOut = 1.
         self.fixingOverloadError = False
         self.fixingPelError = False
@@ -90,7 +90,7 @@ class HamamatsuPMT(PMT):
     
     def isHVOn(self):
         with self.hamamatsuLock:
-            return self.getChanHolding('PMTPower')
+            return self.getChannelValue('PMTPower')
        
     def switchHVOn(self):
         with self.hamamatsuLock:
@@ -112,8 +112,8 @@ class HamamatsuPMT(PMT):
         with self.hamamatsuLock:
             self.setChanHolding('PeltierPower',0)
     
-    def setPMTGain(self,value):
-        self.currentSetGain = value
+    #def setPMTGain(self,value):
+    #    self.currentSetGain = value
     
     def changePMTGain(self,gainOn=False):
         if gainOn:
@@ -138,12 +138,12 @@ class HamamatsuPMT(PMT):
         self.switchPeltierOff()
         
     def activateHV(self):
-        self.switchHVOn()
+        #self.switchHVOn()
         self.changePMTGain(gainOn=True)
         
     def deactivateHV(self):
         self.changePMTGain(gainOn=False)
-        self.switchHVOff()
+        #self.switchHVOff()
     
     def getPMTGain(self):
         with self.hamamatsuLock:    
