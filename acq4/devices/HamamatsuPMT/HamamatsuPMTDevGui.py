@@ -69,13 +69,10 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
             self.ui.turnHVOnOffBtn.setStyleSheet("QLabel {background-color: None}")
         
     def PMTGainChanged(self,gain):
-        if self.dev.isHVOn():
-            if gain is None:
-                self.ui.PMTGainLabel.setText("?")
-            else:
-                self.ui.PMTGainLabel.setText(siFormat(gain, suffix='V'))
+        if gain is None:
+            self.ui.PMTGainLabel.setText("?")
         else:
-            self.ui.PMTGainLabel.setText('-')
+            self.ui.PMTGainLabel.setText(siFormat(gain, suffix='V'))
             
     def coolerError(self,coolerError):
         if coolerError:
