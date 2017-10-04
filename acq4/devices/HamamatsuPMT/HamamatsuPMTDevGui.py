@@ -29,9 +29,9 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
             self.HVOnOffToggled(True)
             
             
-        self.ui.gainSpin.setOpts(suffix='V', siPrefix=True, dec=False, step=0.02)
-        self.ui.gainSpin.setValue(self.dev.currentSetGain)
-        self.ui.gainSpin.setOpts(bounds=(0,0.9))
+        #self.ui.gainSpin.setOpts(suffix='V', siPrefix=True, dec=False, step=0.02)
+        #self.ui.gainSpin.setValue(self.dev.currentSetGain)
+        #self.ui.gainSpin.setOpts(bounds=(0,0.9))
         
         self.ui.turnPeltierOnOffBtn.toggled.connect(self.PeltierOnOffToggled)
         self.ui.turnHVOnOffBtn.toggled.connect(self.HVOnOffToggled)
@@ -41,7 +41,7 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
         self.dev.sigOverloadErrorOccurred.connect(self.overloadError)
         self.dev.sigPeltierStatus.connect(self.peltierStatus)
         self.dev.sigPMTPower.connect(self.pmtPower)
-        self.ui.gainSpin.valueChanged.connect(self.gainSpinChanged)
+        #self.ui.gainSpin.valueChanged.connect(self.gainSpinChanged)
         
     def PeltierOnOffToggled(self, b):
         if b:
@@ -82,10 +82,10 @@ class HamamatsuPMTDevGui(QtGui.QWidget):
             self.ui.CoolerStatusLabel.setText('False')
             self.ui.CoolerStatusLabel.setStyleSheet("QLabel {color: None}")
         
-    def gainSpinChanged(self,value):
-        self.dev.setPMTGain(value)
-        if self.dev.isHVOn():
-            self.dev.changePMTGain()
+    #def gainSpinChanged(self,value):
+        #self.dev.setPMTGain(value)
+        #if self.dev.isHVOn():
+            #self.dev.changePMTGain()
             
     
     def overloadError(self,overloadError):

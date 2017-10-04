@@ -63,7 +63,7 @@ class HamamatsuPMT(PMT):
         self.currentSetGain = config.get('PMTgain',0.85)
         self.gainStepSize = 0.001
         self.gainStepWait = 0.01 # in sec
-        self.HVpowerTimeOut = 3.
+        self.HVpowerTimeOut = 5.
         self.PelPowerTimeOut = 1.
         self.fixingOverloadError = False
         self.fixingPelError = False
@@ -86,10 +86,13 @@ class HamamatsuPMT(PMT):
         
         dm.declareInterface(name, ['HamamatsuPMT'], self)
         dm.sigAbortAll.connect(self.deactivatePMT)
-        
+    
+    def quit(self):
+        self.deactivatePMT()  
+    
     def isHVOn(self):
-       with self.hamamatsuLock:
-           return self.getChanHolding('PMTPower')
+        with self.hamamatsuLock:
+            return self.getChanHolding('PMTPower')
        
     def switchHVOn(self):
         with self.hamamatsuLock:
@@ -114,7 +117,7 @@ class HamamatsuPMT(PMT):
     def setPMTGain(self,value):
         self.currentSetGain = value
     
-    def changePMTGain(self,newGain=False):
+    def changePMTGain(self,gainOn=False):
         if gainOn:
             with self.hamamatsuLock:
                 self.setChanHolding('VcontExt',1)    
