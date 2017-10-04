@@ -61,9 +61,7 @@ class HamamatsuPMT(PMT):
     
     def __init__(self, dm, config, name):
         self.currentSetGain = config.get('PMTgain',0.85)
-        self.gainStepSize = 0.001
-        self.gainStepWait = 0.01 # in sec
-        self.HVpowerTimeOut = 5.
+        self.HVpowerTimeOut = 6.
         self.PelPowerTimeOut = 1.
         self.fixingOverloadError = False
         self.fixingPelError = False
@@ -132,31 +130,20 @@ class HamamatsuPMT(PMT):
             self.deactivatePeltier()
     
     def activatePeltier(self):
-        print 'Peltier:', self.isPeltierOn()
-        print 'turn Peltier on'
         self.switchPeltierOn()
-        print 'Peltier:', self.isPeltierOn()
         
     def deactivatePeltier(self):
         if self.isHVOn():
             self.deactivateHV()
-        print 'Peltier:', self.isPeltierOn()
-        print 'turn Peltier off'
         self.switchPeltierOff()
-        print 'Peltier:', self.isPeltierOn()
         
     def activateHV(self):
-        print 'High Voltage:', self.isHVOn()
-        print 'turn High Voltage on'
         self.switchHVOn()
         self.changePMTGain(gainOn=True)
-        print 'High voltage:',self.isHVOn()
         
     def deactivateHV(self):
-        print 'turn High Voltage off'
         self.changePMTGain(gainOn=False)
         self.switchHVOff()
-        print 'High voltage:',self.isHVOn()
     
     def getPMTGain(self):
         with self.hamamatsuLock:    
@@ -197,9 +184,7 @@ class HamamatsuPMT(PMT):
             if (overloadError) and (not self.fixingOverloadError):
                 self.fixingOverloadError = True
                 self.deactivateHV()
-                print 'high voltage time out ...',
                 time.sleep(self.HVpowerTimeOut)
-                print 'ended'
                 self.activateHV()
                 self.fixingOverloadError = False
                 
