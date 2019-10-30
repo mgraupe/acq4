@@ -20,6 +20,8 @@ from acq4.util.Mutex import Mutex
 from acq4.util.debug import *
 from acq4.util import imaging
 from acq4.pyqtgraph import Vector, SRTTransform3D
+from acq4.util.imaging.record_thread import RecordThread
+
 
 from .CameraInterface import CameraInterface
 
@@ -480,6 +482,15 @@ class CameraTask(DAQGenericTask):
         self._stopTime = 0
         self.resultObj = None
         
+        ## set up recording thread
+        self.recordThread = RecordThread(self)
+        self.recordThread.start()
+        # self.recordThread.sigShowMessage.connect(self.showMessage)
+        #self.recordThread.finished.connect(self.recordThreadStopped)
+        #self.recordThread.sigRecordingFinished.connect(self.recordFinished)
+        #self.recordThread.sigRecordingFailed.connect(self.recordingFailed)
+        #self.recordThread.sigSavedFrame.connect(self.threadSavedFrame)
+        
     def configure(self):
         ## Merge command into default values:
         prof = Profiler('Camera.CameraTask.configure', disabled=True)
@@ -546,6 +557,7 @@ class CameraTask(DAQGenericTask):
         disconnect = False
         with self.lock:
             if self.recording:
+                self.recordThread.newFrame(frame)
                 self.frames.append(frame)
             if self.stopRecording and frame.info()['time'] > self._stopTime:
                 self.recording = False
@@ -563,6 +575,7 @@ class CameraTask(DAQGenericTask):
             
         ## Last I checked, this does nothing. It should be here anyway, though..
         DAQGenericTask.start(self)
+        self.recordThread.startRecording(frameLimit=None)
     
     def isDone(self):
         ## If camera stopped, then probably there was a problem and we are finished.
@@ -587,6 +600,9 @@ class CameraTask(DAQGenericTask):
         
         if 'popState' in self.camCmd:
             self.dev.popState(self.camCmd['popState'])  ## restores previous settings, stops/restarts camera if needed
+        
+        self.recordThread.stopRecording()
+
                 
     def getResult(self):
         if self.resultObj is None:
@@ -600,13 +616,14 @@ class CameraTask(DAQGenericTask):
         return self.resultObj
         
     def storeResult(self, dirHandle):
-        result = self.getResult()
-        result = {'frames': (result.asMetaArray(), result.info()), 'daqResult': (result.daqResult(), {})}
-        dh = dirHandle.mkdir(self.dev.name())
-        for k in result:
-            data, info = result[k]
-            if data is not None:
-                dh.writeFile(data, k, info=info)
+        pass
+        #result = self.getResult()
+        #result = {'frames': (result.asMetaArray(), result.info()), 'daqResult': (result.daqResult(), {})}
+        #dh = dirHandle.mkdir(self.dev.name())
+        #for k in result:
+        #    data, info = result[k]
+        #    if data is not None:
+        #        dh.writeFile(data, k, info=info)
 
 
 class CameraTaskResult:
