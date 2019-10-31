@@ -24,7 +24,7 @@ class RecordThread(Thread):
     sigRecordingFinished = Qt.Signal(object, object)  # file handle, num frames
     sigSavedFrame = Qt.Signal(object)
     
-    def __init__(self, ui):
+    def __init__(self, ui, storageDir=None):
         Thread.__init__(self)
         self.m = acq4.Manager.getManager()
         
@@ -36,7 +36,7 @@ class RecordThread(Thread):
         # Interaction with worker thread:
         self.lock = Mutex(Qt.QMutex.Recursive)
         self.newFrames = []  # list of frames and the files they should be sored / appended to.
-
+        self.dirH = storageDir
         # Attributes private to worker thread:
         self.currentStack = None  # file handle of currently recorded stack
         self.startFrameTime = None
@@ -166,7 +166,10 @@ class RecordThread(Thread):
 
             data = frame['frame'].getImage()
             info = frame['frame'].info()
-            dh = frame['dir']
+            if self.dirH == None:
+                dh = frame['dir']
+            else:
+                dh = self.dirH
             stack = frame['stack']
 
             if stack is False:

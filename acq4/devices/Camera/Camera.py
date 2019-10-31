@@ -471,6 +471,9 @@ class CameraTask(DAQGenericTask):
         
         self.__startOrder = [], []
         self.camCmd = cmd
+        self.pTask = parentTask
+        
+        
         self.lock = Mutex()
         self.recordHandle = None
         self.stopAfter = False
@@ -483,8 +486,11 @@ class CameraTask(DAQGenericTask):
         self.resultObj = None
         
         ## set up recording thread
-        self.recordThread = RecordThread(self)
-        self.recordThread.start()
+        if self.pTask.command['protocol']['storeData'] :
+            dirHandle = self.pTask.command['protocol']['storageDir']
+            self.dh = dirHandle.mkdir(self.dev.name())
+            self.recordThread = RecordThread(self,storageDir=self.dh)
+            self.recordThread.start()
         # self.recordThread.sigShowMessage.connect(self.showMessage)
         #self.recordThread.finished.connect(self.recordThreadStopped)
         #self.recordThread.sigRecordingFinished.connect(self.recordFinished)
@@ -557,7 +563,9 @@ class CameraTask(DAQGenericTask):
         disconnect = False
         with self.lock:
             if self.recording:
-                self.recordThread.newFrame(frame)
+                #print('parent Task - protocol - storeData :',self.pTask.command['protocol']['storeData'])
+                if self.pTask.command['protocol']['storeData'] : # check if test run or run to record
+                    self.recordThread.newFrame(frame)
                 self.frames.append(frame)
             if self.stopRecording and frame.info()['time'] > self._stopTime:
                 self.recording = False
@@ -575,7 +583,8 @@ class CameraTask(DAQGenericTask):
             
         ## Last I checked, this does nothing. It should be here anyway, though..
         DAQGenericTask.start(self)
-        self.recordThread.startRecording(frameLimit=None)
+        if self.pTask.command['protocol']['storeData'] :
+            self.recordThread.startRecording(frameLimit=None)
     
     def isDone(self):
         ## If camera stopped, then probably there was a problem and we are finished.
@@ -600,8 +609,8 @@ class CameraTask(DAQGenericTask):
         
         if 'popState' in self.camCmd:
             self.dev.popState(self.camCmd['popState'])  ## restores previous settings, stops/restarts camera if needed
-        
-        self.recordThread.stopRecording()
+        if self.pTask.command['protocol']['storeData'] :
+            self.recordThread.stopRecording()
 
                 
     def getResult(self):
@@ -616,14 +625,15 @@ class CameraTask(DAQGenericTask):
         return self.resultObj
         
     def storeResult(self, dirHandle):
-        pass
-        #result = self.getResult()
+        #pass
+        result = self.getResult()
         #result = {'frames': (result.asMetaArray(), result.info()), 'daqResult': (result.daqResult(), {})}
+        result = {'daqResult': (result.daqResult(), {})}
         #dh = dirHandle.mkdir(self.dev.name())
-        #for k in result:
-        #    data, info = result[k]
-        #    if data is not None:
-        #        dh.writeFile(data, k, info=info)
+        for k in result:
+            data, info = result[k]
+            if data is not None:
+                self.dh.writeFile(data, k, info=info)
 
 
 class CameraTaskResult:
